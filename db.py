@@ -8,17 +8,24 @@ client = motor.motor_asyncio.AsyncIOMotorClient("mongodb+srv://root:root@activit
 db = client.bidLog
 
 
-
 class ItemLog(BaseModel):
-    automation_link: str          # Link or unique identifier for the automation process
+    transaction_id: Optional[str] = None
+    automation_link: Optional[str] = None          # Link or unique identifier for the automation process
     lot: str                  # Unique identifier for each item (e.g., SKU or database ID)
-    client: str                   # Identifier for the client (e.g., username or user ID)
+    client: Optional[str] = None                   # Identifier for the client (e.g., username or user ID)
     target_price: float           # Final price automated to
     previous_price: Optional[float] = None  # (Optional) Original price before automation
     status: str                   # Status of automation, e.g., "Success" or "Failed"
     timestamp: datetime           # Time when this specific item was automated
 
+class ItemLogRequest(BaseModel):
+    transaction_id: str
+    items: List[ItemLog]
+    automation_link: str
+    client: str
+    
 class LogModel(BaseModel):
+    transaction_id: str
     automation_link: str          # Link or unique identifier for the automation process
     timestamp: datetime           # Main timestamp for the logging event
     client: str                   # Identifier for the client (e.g., username or user ID)
