@@ -1,11 +1,7 @@
+
 from typing import Optional, List
 from pydantic import  BaseModel
-import motor.motor_asyncio
 from datetime import datetime
-
-# MongoDB client setup
-client = motor.motor_asyncio.AsyncIOMotorClient("mongodb+srv://root:root@activitycluster.zar8d.mongodb.net/?retryWrites=true&w=majority&appName=ActivityCluster")
-db = client.bidLog
 
 
 class ItemLog(BaseModel):
@@ -24,6 +20,11 @@ class ItemLogRequest(BaseModel):
     automation_link: str
     client: str
     
+class ItemLogResponse(BaseModel):
+    status: str
+    batch_size: int
+    item_log_ids: List[str]
+    
 class LogModel(BaseModel):
     transaction_id: str
     automation_link: str          # Link or unique identifier for the automation process
@@ -38,5 +39,8 @@ class LogModel(BaseModel):
     bot_win_count: int
     bot_win_increased_price: float
     
+class LogResponse(BaseModel):
+    status: str
+    log_id: str
     
 # class ErrorLogModel(BaseModel):
