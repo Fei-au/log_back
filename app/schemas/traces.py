@@ -1,15 +1,16 @@
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel
 
 
 class OrderItem(BaseModel):
     trace_id: str
-    invoice_number: str
-    order_id: Optional[str] = None
+    invoice_number: int  # str or int
+    order_id:  int
     item_number: str
-    order_item_id: Optional[str] = None
-    is_inputed: Optional[bool] = False
+    order_item_id: Optional[int] = None
+    is_scanned: Optional[bool] = False
     is_ticked: Optional[bool] = False
+    is_in_invoice: bool
     sold_time: str
 
     
