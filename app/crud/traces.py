@@ -3,5 +3,5 @@ from app.schemas.traces import OrderItem
 
 
 async def insert_order_item(order_item: OrderItem):
-    result = await db_traces.bids.insert_one(order_item.model_dump())
+    result = await db_traces.order_item.insert_one(order_item.model_dump())
     return str(result.inserted_id)
