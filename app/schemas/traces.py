@@ -12,6 +12,7 @@ class OrderItem(BaseModel):
     is_ticked: Optional[bool] = False
     is_in_invoice: bool
     sold_time: str
+    note: Optional[str] = None
 
     
     
