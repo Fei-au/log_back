@@ -29,7 +29,7 @@ class LogModel(BaseModel):
     transaction_id: str
     automation_link: str          # Link or unique identifier for the automation process
     timestamp: datetime           # Main timestamp for the logging event
-    client: str                   # Identifier for the client (e.g., username or user ID)
+    client: Optional[str] = None  # Identifier for the client (e.g., username or user ID)
     action: str                   # Description of action, e.g., "Automated Pricing"
     # items: List[ItemLog]          # List of items automated, using the ItemLog structure
     success: bool                 # Status of the overall automation process (True for success, False for failure)
