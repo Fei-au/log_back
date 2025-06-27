@@ -1,0 +1,1 @@
+# Define Pydantic models that define the structure of data for validation, serialization, and deserialization.
