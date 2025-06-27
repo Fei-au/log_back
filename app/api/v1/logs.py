@@ -4,8 +4,7 @@ from app.crud.logs import insert_bids, insert_transaction, insert_filter_txn, in
 import logging
 from app.schemas.base import ResponseBase, InsertOneResponse
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter()

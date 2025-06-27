@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+service LogAsyncTaskService {
+  rpc WriteLog (LogAsyncTaskRequest) returns (LogAsyncTaskResponse);
+}
+
+message LogAsyncTaskRequest {
+  string timestamp = 1;
+  string name = 2;
+  string task_id = 3;    
+  string exc = 4;
+  string args = 5;
+  string kwargs = 6; 
+  string einfo = 7;
+  string note = 8;
+}
+
+message LogAsyncTaskResponse {
+  string status = 1;
+  string message = 2;
+  string data = 3;
+}
