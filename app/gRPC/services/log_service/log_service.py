@@ -16,7 +16,6 @@ class LogAsyncTaskServiceServicer(log_service_pb2_grpc.LogAsyncTaskServiceServic
     def WriteLog(self, request, context):
         try:
             result = insert_task_log(MessageToDict(request))
-            raise NotImplementedError("This method is not implemented yet.")
             return log_service_pb2.LogAsyncTaskResponse(
                 status="success",
                 message="Log received",
