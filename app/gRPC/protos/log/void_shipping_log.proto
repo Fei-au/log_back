@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+service LogVoidShippingService {
+  rpc WriteLog (LogVoidShippingRequest) returns (LogVoidShippingResponse);
+}
+
+message LogVoidShippingRequest {
+  string timestamp = 1;
+  string id = 2;
+  string reason = 3;
+}
+
+message LogVoidShippingResponse {
+  string status = 1;
+  string message = 2;
+  string data = 3;
+}
