@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import log_service_pb2 as log__service__pb2
+from ..log import common_async_log_pb2 as log_dot_common__async__log__pb2
 
 GRPC_GENERATED_VERSION = '1.73.1'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in log_service_pb2_grpc.py depends on'
+        + f' but the generated code in log/common_async_log_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,8 +36,8 @@ class LogAsyncTaskServiceStub(object):
         """
         self.WriteLog = channel.unary_unary(
                 '/LogAsyncTaskService/WriteLog',
-                request_serializer=log__service__pb2.LogAsyncTaskRequest.SerializeToString,
-                response_deserializer=log__service__pb2.LogAsyncTaskResponse.FromString,
+                request_serializer=log_dot_common__async__log__pb2.LogAsyncTaskRequest.SerializeToString,
+                response_deserializer=log_dot_common__async__log__pb2.LogAsyncTaskResponse.FromString,
                 _registered_method=True)
 
 
@@ -55,8 +55,8 @@ def add_LogAsyncTaskServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'WriteLog': grpc.unary_unary_rpc_method_handler(
                     servicer.WriteLog,
-                    request_deserializer=log__service__pb2.LogAsyncTaskRequest.FromString,
-                    response_serializer=log__service__pb2.LogAsyncTaskResponse.SerializeToString,
+                    request_deserializer=log_dot_common__async__log__pb2.LogAsyncTaskRequest.FromString,
+                    response_serializer=log_dot_common__async__log__pb2.LogAsyncTaskResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -84,8 +84,8 @@ class LogAsyncTaskService(object):
             request,
             target,
             '/LogAsyncTaskService/WriteLog',
-            log__service__pb2.LogAsyncTaskRequest.SerializeToString,
-            log__service__pb2.LogAsyncTaskResponse.FromString,
+            log_dot_common__async__log__pb2.LogAsyncTaskRequest.SerializeToString,
+            log_dot_common__async__log__pb2.LogAsyncTaskResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -1,10 +1,10 @@
 import grpc
 from concurrent import futures
 import logging
-from .services.log_service import log_service_pb2_grpc
+from .generated.log import common_async_log_pb2_grpc
+from .services.common_async_log_service import LogAsyncTaskServiceServicer
 from pathlib import Path
 import os
-from .services.log_service.log_service import LogAsyncTaskServiceServicer
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 def serve():
     port = "50051"
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    log_service_pb2_grpc.add_LogAsyncTaskServiceServicer_to_server(LogAsyncTaskServiceServicer(), server)
+    common_async_log_pb2_grpc.add_LogAsyncTaskServiceServicer_to_server(LogAsyncTaskServiceServicer(), server)
     server.add_insecure_port('[::]:' + port)
     server.start()
     logger.info("gRPC server started on port 50051.")
