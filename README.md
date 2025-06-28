@@ -17,11 +17,7 @@ source .venv/bin/activate
 // Start fastapi at background
 nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --timeout-keep-alive 60 > uvicorn.log 2>&1 &
 // Start gRPC
-<<<<<<< Updated upstream
-python -m app.gRPC.grpc_server
-=======
 nohup python -m app.gRPC.server > grpc_nohup.log 2>&1 &
->>>>>>> Stashed changes
 ```
 
 
