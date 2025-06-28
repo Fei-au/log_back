@@ -2,7 +2,9 @@ import grpc
 from concurrent import futures
 import logging
 from .generated.log import common_async_log_pb2_grpc
+from .generated.log import void_shipping_log_pb2_grpc
 from .services.common_async_log_service import LogAsyncTaskServiceServicer
+from .services.void_shipping_log_service import LogVoidShippingService
 from pathlib import Path
 import os
 
@@ -20,6 +22,7 @@ def serve():
     port = "50051"
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     common_async_log_pb2_grpc.add_LogAsyncTaskServiceServicer_to_server(LogAsyncTaskServiceServicer(), server)
+    void_shipping_log_pb2_grpc.add_LogVoidShippingServiceServicer_to_server(LogVoidShippingService(), server)
     server.add_insecure_port('[::]:' + port)
     server.start()
     logger.info("gRPC server started on port 50051.")
