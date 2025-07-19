@@ -3,7 +3,7 @@ from datetime import datetime
 import pytz
 from app.db.mongodb import db_refunds
 from typing import List, Optional
-from app.graphql.types.refund import RefundInvoice, RefundInvoiceInput, OrderItem, voidRefundInvoiceInput
+from app.graphql.types.refund import RefundInvoice, RefundInvoiceInput, OrderItem, voidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
 from app.graphql.types.base import BaseInsertOneResponse, BaseUpdateOneResponse
 
@@ -60,7 +60,8 @@ async def create_refund_invoice_resolver(input: RefundInvoiceInput) -> BaseInser
                 complete=item_input.complete
             )
         )
-
+        
+    has_completed=all(item_input.complete for item_input in input.order_items),
     new_refund_invoice = RefundInvoice(
         _id=new_id,
         refund_id=refund_id,
@@ -69,7 +70,8 @@ async def create_refund_invoice_resolver(input: RefundInvoiceInput) -> BaseInser
         auction=input.auction,
         order_items=order_items_output,
         created_at=created_at,
-        has_completed=all(item_input.complete for item_input in input.order_items),
+        has_completed=has_completed,
+        completed_time=created_at if has_completed else None,
         link=None,
         has_voided=False,
         voided_time=None,
@@ -78,9 +80,11 @@ async def create_refund_invoice_resolver(input: RefundInvoiceInput) -> BaseInser
     )
     
     
-    from app.tools.generate_pdf import generate_refund_invoice_pdf
+    from app.tools.generate_pdf import generate_refund_invoice_pdf, generate_problem_item_pdf
     pdf_bytes = generate_refund_invoice_pdf(new_refund_invoice)
-    # Save the PDF locally
+    problem_item_pdf = generate_problem_item_pdf(new_refund_invoice)
+    with open("C:\\Users\\KY\\Downloads\\problem_item.pdf", "wb") as pdf_file:
+        pdf_file.write(problem_item_pdf)
     with open("C:\\Users\\KY\\Downloads\\test.pdf", "wb") as pdf_file:
         pdf_file.write(pdf_bytes)
     return BaseInsertOneResponse(inserted_id=str(123))
@@ -92,4 +96,9 @@ async def create_refund_invoice_resolver(input: RefundInvoiceInput) -> BaseInser
 async def void_refund_invoice_resolver(input: voidRefundInvoiceInput) -> BaseUpdateOneResponse:
     refunds_collection = db_refunds["refunds"]
     res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"has_voided": True, "voided_time": datetime.now(pytz.utc).isoformat()}})
+    return BaseUpdateOneResponse(modified_count=res.modified_count)
+
+async def complete_refund_invoice_resolver(input: CompleteRefundInvoiceInput) -> BaseUpdateOneResponse:
+    refunds_collection = db_refunds["refunds"]
+    res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"has_completed": True, "completed_time": datetime.now(pytz.utc).isoformat()}})
     return BaseUpdateOneResponse(modified_count=res.modified_count)

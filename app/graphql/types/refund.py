@@ -35,11 +35,17 @@ class RefundInvoiceInput:
     order_items: List[OrderItemInput]
     staff_user_id: int
     staff_name: str
+
     
 @strawberry.input
 class voidRefundInvoiceInput:
     refund_id: str
     has_voided: bool
+    
+@strawberry.input
+class CompleteRefundInvoiceInput:
+    refund_id: str
+    has_completed: bool
 
 @strawberry.type
 class OrderItem:
@@ -74,6 +80,7 @@ class RefundInvoice:
     order_items: List[OrderItem]
     created_at: str
     has_completed: bool
+    completed_time: Optional[str]
     link: Optional[str]
     has_voided: bool
     voided_time: Optional[str]

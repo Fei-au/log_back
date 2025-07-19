@@ -3,7 +3,7 @@ from app.graphql.types.refund import RefundInvoice
 from app.graphql.resolvers.refund import refund_invoices
 from typing import List
 from app.graphql.types.refund import RefundInvoice, RefundInvoiceInput, voidRefundInvoiceInput
-from app.graphql.resolvers.refund import create_refund_invoice_resolver, void_refund_invoice_resolver
+from app.graphql.resolvers.refund import create_refund_invoice_resolver, void_refund_invoice_resolver, complete_refund_invoice_resolver
 from app.graphql.types.base import BaseInsertOneResponse, BaseUpdateOneResponse
 from typing import Optional
 
@@ -22,3 +22,7 @@ class Mutation:
     @strawberry.mutation
     def void_refund_invoice(self, input: voidRefundInvoiceInput) -> BaseUpdateOneResponse:
         return void_refund_invoice_resolver(input)
+    
+    @strawberry.mutation
+    def complete_refund_invoice(self, input: RefundInvoiceInput) -> BaseInsertOneResponse:
+        return complete_refund_invoice_resolver(input)
