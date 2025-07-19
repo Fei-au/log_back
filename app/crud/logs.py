@@ -1,5 +1,6 @@
 from app.db.mongodb import db_bidLog
-from app.schemas.logs import ItemLog, LogModel, FilterBidderTxnsModel, LogBidderBlockModel
+from app.schemas.logs import ItemLog
+from app.models.logs import LogModel, FilterBidderTxnsModel, LogBidderBlockModel
 
 
 async def insert_bid(item: ItemLog):

@@ -1,14 +1,16 @@
-import motor.motor_asyncio
+from motor import motor_asyncio
 from pymongo import MongoClient
 from app.core.config import settings
 
 # MongoDB client setup
-client = motor.motor_asyncio.AsyncIOMotorClient(settings.mongodb_dsn)
+client = motor_asyncio.AsyncIOMotorClient(settings.mongodb_dsn)
 sync_client = MongoClient(settings.mongodb_dsn)
 
 db_bidLog = client.bidLog
 
 db_traces = client.traces
+
+db_refunds = client.refunds
 
 sync_db_task_logs = sync_client.task_logs
 
