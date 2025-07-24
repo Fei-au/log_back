@@ -14,11 +14,19 @@ def map_dict_to_refund_invoice(doc: dict) -> RefundInvoiceQueryOutput:
     order_items = doc.pop('order_items')
     return RefundInvoiceQueryOutput(**doc, order_items=[OrderItem(**order_item) for order_item in order_items])
 
-async def refund_invoices(invoice_number: Optional[int], has_completed: Optional[bool], limit: int, offset: int) -> List[RefundInvoiceQueryOutput]:
+async def refund_invoices(
+    invoice_number: Optional[int],
+    has_completed: Optional[bool], 
+    voided: Optional[bool],
+    limit: int,
+    offset: int
+    ) -> List[RefundInvoiceQueryOutput]:
     refunds_collection = db_refunds["refunds"]
     query = {}
     if has_completed is not None:
         query["has_completed"] = has_completed
+    if voided is not None:
+        query["has_voided"] = voided
     if invoice_number:
         query["invoice_number"] = invoice_number
     

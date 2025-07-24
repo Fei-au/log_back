@@ -10,8 +10,15 @@ from typing import Optional
 @strawberry.type
 class Query:
     @strawberry.field
-    async def refund_invoices(self, invoice_number: Optional[int]=None, has_completed: Optional[bool]=None, limit: int = 10, offset: int = 0) -> List[RefundInvoiceQueryOutput]:
-        return await refund_invoices(invoice_number, has_completed, limit, offset)
+    async def refund_invoices(
+        self, 
+        invoice_number: Optional[int]=None,
+        has_completed: Optional[bool]=None,
+        voided: Optional[bool]=None,
+        limit: int = 10,
+        offset: int = 0
+        ) -> List[RefundInvoiceQueryOutput]:
+        return await refund_invoices(invoice_number, has_completed, voided, limit, offset)
 
 @strawberry.type
 class Mutation:
