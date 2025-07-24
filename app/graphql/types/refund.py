@@ -1,5 +1,6 @@
 import strawberry
 from typing import List, Optional
+from app.tools.gcp_tools import generate_signed_url
 
 '''
 Strawberry GraphQL, by default, automatically converts snake_case field names in Python 
@@ -27,14 +28,21 @@ class OrderItemInput:
     complete: bool = False
 
 @strawberry.input
-class RefundInvoiceInput:
+class RefundInvoiceCreateInput:
     # order id
     order_id: int
     invoice_number: int
     auction: int
     order_items: List[OrderItemInput]
+    total_refund_amount: float
     staff_user_id: int
     staff_name: str
+
+@strawberry.type
+class RefundInvoiceCreateOutput:
+    signed_refund_path: str
+    signed_problem_item_path: str
+    inserted_id: str
 
     
 @strawberry.input
@@ -47,6 +55,7 @@ class CompleteRefundInvoiceInput:
     refund_id: str
     has_completed: bool
 
+# mongodb order item model
 @strawberry.type
 class OrderItem:
     # order item id
@@ -68,8 +77,9 @@ class OrderItem:
     sold_time: Optional[str]
     complete: bool=False
 
-@strawberry.type
-class RefundInvoice:
+# mongodb refund invoice model
+@strawberry.interface
+class RefundInvoiceBase:
     # mongodb generated unique id
     _id: strawberry.ID
     # invoice_number + yymmdd + timestamp last four digit
@@ -80,9 +90,29 @@ class RefundInvoice:
     order_items: List[OrderItem]
     created_at: str
     has_completed: bool
-    completed_time: Optional[str]
-    link: Optional[str]
+    completed_time: Optional[str] = None
+    total_refund_amount: float
     has_voided: bool
-    voided_time: Optional[str]
+    voided_time: Optional[str] = None
     staff_user_id: int
     staff_name: str
+    refund_invoice_path: Optional[str] = None
+    problem_item_path: Optional[str] = None
+    
+@strawberry.type
+class RefundInvoiceModel(RefundInvoiceBase):
+    pass
+    
+@strawberry.type
+class RefundInvoiceQueryOutput(RefundInvoiceBase):
+
+    @strawberry.field
+    def signed_refund_invoice_path(self) -> Optional[str]:
+        # Logic to generate signed URL for refund_invoice_path
+        return generate_signed_url(self.refund_invoice_path)
+
+    @strawberry.field
+    def signed_problem_item_path(self) -> Optional[str]:
+        # Logic to generate signed URL for problem_item_path
+        return generate_signed_url(self.problem_item_path)
+

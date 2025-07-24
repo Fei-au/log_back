@@ -3,15 +3,16 @@ from datetime import datetime
 import pytz
 from app.db.mongodb import db_refunds
 from typing import List, Optional
-from app.graphql.types.refund import RefundInvoice, RefundInvoiceInput, OrderItem, voidRefundInvoiceInput, CompleteRefundInvoiceInput
+from app.graphql.types.refund import RefundInvoiceModel, RefundInvoiceCreateOutput, RefundInvoiceCreateInput, RefundInvoiceQueryOutput, OrderItem, voidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
 from app.graphql.types.base import BaseInsertOneResponse, BaseUpdateOneResponse
+from app.tools.gcp_tools import upload_blob, generate_signed_url
 
-def map_dict_to_refund_invoice(doc: dict) -> RefundInvoice:
+def map_dict_to_refund_invoice(doc: dict) -> RefundInvoiceQueryOutput:
     order_items = doc.pop('order_items')
-    return RefundInvoice(**doc, order_items=[OrderItem(**order_item) for order_item in order_items])
+    return RefundInvoiceQueryOutput(**doc, order_items=[OrderItem(**order_item) for order_item in order_items])
 
-async def refund_invoices(invoice_number: Optional[int], has_completed: Optional[bool], limit: int, offset: int) -> List[RefundInvoice]:
+async def refund_invoices(invoice_number: Optional[int], has_completed: Optional[bool], limit: int, offset: int) -> List[RefundInvoiceQueryOutput]:
     refunds_collection = db_refunds["refunds"]
     query = {}
     if has_completed is not None:
@@ -28,7 +29,7 @@ async def refund_invoices(invoice_number: Optional[int], has_completed: Optional
         refund_invoices_list.append(map_dict_to_refund_invoice(doc))
     return refund_invoices_list
 
-async def create_refund_invoice_resolver(input: RefundInvoiceInput) -> BaseInsertOneResponse:
+async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> RefundInvoiceCreateOutput:
     refunds_collection = db_refunds["refunds"]
 
     # Generate unique ID and refund_id
@@ -61,8 +62,11 @@ async def create_refund_invoice_resolver(input: RefundInvoiceInput) -> BaseInser
             )
         )
         
-    has_completed=all(item_input.complete for item_input in input.order_items),
-    new_refund_invoice = RefundInvoice(
+    has_completed=all(item_input.complete for item_input in input.order_items)
+    total = sum(item_input.refund_amount for item_input in input.order_items)
+    if total != input.total_refund_amount:
+        raise ValueError(f"Total refund amount {input.total_refund_amount} does not match the sum of item refunds {total}")
+    new_refund_invoice = RefundInvoiceModel(
         _id=new_id,
         refund_id=refund_id,
         order_id=input.order_id,
@@ -72,26 +76,28 @@ async def create_refund_invoice_resolver(input: RefundInvoiceInput) -> BaseInser
         created_at=created_at,
         has_completed=has_completed,
         completed_time=created_at if has_completed else None,
-        link=None,
+        total_refund_amount=input.total_refund_amount,
         has_voided=False,
-        voided_time=None,
         staff_user_id=input.staff_user_id,
         staff_name=input.staff_name,
     )
     
-    
     from app.tools.generate_pdf import generate_refund_invoice_pdf, generate_problem_item_pdf
     pdf_bytes = generate_refund_invoice_pdf(new_refund_invoice)
     problem_item_pdf = generate_problem_item_pdf(new_refund_invoice)
-    with open("C:\\Users\\KY\\Downloads\\problem_item.pdf", "wb") as pdf_file:
-        pdf_file.write(problem_item_pdf)
-    with open("C:\\Users\\KY\\Downloads\\test.pdf", "wb") as pdf_file:
-        pdf_file.write(pdf_bytes)
-    return BaseInsertOneResponse(inserted_id=str(123))
+    refund_invoice_path = upload_blob(pdf_bytes, new_refund_invoice.invoice_number, new_refund_invoice.refund_id, None)
+    problem_item_path = upload_blob(problem_item_pdf, new_refund_invoice.invoice_number, new_refund_invoice.refund_id, "problem_item")
+
+    new_refund_invoice.refund_invoice_path = refund_invoice_path
+    new_refund_invoice.problem_item_path = problem_item_path
     
+    signed_refund_path = generate_signed_url(refund_invoice_path)
+    signed_problem_item_path = generate_signed_url(problem_item_path)
+
+    res = await refunds_collection.insert_one(asdict(new_refund_invoice))
     
-    # res = await refunds_collection.insert_one(asdict(new_refund_invoice))
-    # return BaseInsertOneResponse(inserted_id=str(res.inserted_id))
+    return RefundInvoiceCreateOutput(signed_refund_path=signed_refund_path, signed_problem_item_path=signed_problem_item_path, inserted_id=str(res.inserted_id))
+    
 
 async def void_refund_invoice_resolver(input: voidRefundInvoiceInput) -> BaseUpdateOneResponse:
     refunds_collection = db_refunds["refunds"]

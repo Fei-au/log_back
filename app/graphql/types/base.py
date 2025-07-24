@@ -7,3 +7,4 @@ class BaseInsertOneResponse:
 @strawberry.type
 class BaseUpdateOneResponse:
     modified_count: int
+    

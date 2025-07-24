@@ -1,71 +1,68 @@
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Frame, PageTemplate
+from reportlab.platypus import SimpleDocTemplate, BaseDocTemplate, Paragraph, Spacer, Table, TableStyle, Frame, PageTemplate
 from reportlab.lib.units import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from io import BytesIO
 from datetime import datetime
-from app.graphql.types.refund import RefundInvoice
+from app.graphql.types.refund import RefundInvoiceModel
 
 
 # TODO: If the order item expand to the second page, repeat the header again and show page number on each page
-def generate_refund_invoice_pdf(data: RefundInvoice):
+def generate_refund_invoice_pdf(data: RefundInvoiceModel):
     buffer = BytesIO()
-    page_width, page_height = 4 * inch, 6 * inch
+    page_width, page_height = 3.15 * inch, 2 * inch
 
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name="Small", fontSize=8))
-    styles.add(ParagraphStyle(name="RightAlign", fontSize=9, alignment=2))
-    styles.add(ParagraphStyle(name="ItemHeader", fontSize=9, fontName="Helvetica-Bold"))
-    styles.add(ParagraphStyle(name="ItemText", fontSize=9))
+    styles.add(ParagraphStyle(name="Small", fontSize=6))
+    styles.add(ParagraphStyle(name="RightAlign", fontSize=7, alignment=2))
+    styles.add(ParagraphStyle(name="ItemHeader", fontSize=7, fontName="Helvetica-Bold"))
+    styles.add(ParagraphStyle(name="ItemText", fontSize=7))
 
     created_dt = datetime.fromisoformat(data.created_at)
     created_str = created_dt.strftime("%Y-%m-%d %H:%M:%S")
     total_items = len(data.order_items)
 
     # Header function
-    def header(canvas, doc):
+    def header(canvas, doc, current_page=1):
         canvas.saveState()
-        canvas.setFont("Helvetica-Bold", 12)
-        canvas.drawString(30, page_height - 40, f"Refund Invoice #{data.invoice_number}")
-        canvas.setFont("Helvetica", 7)
-        canvas.drawString(30, page_height - 52, f"Refund ID: {data.refund_id}")
-        canvas.drawString(30, page_height - 62, f"Date: {created_str}")
-        canvas.drawString(30, page_height - 72, f"Auction: {data.auction}")
-        canvas.drawString(30, page_height - 82, f"Total Items: {total_items}")
+        canvas.setFont("Helvetica-Bold", 9)
+        canvas.drawString(15, page_height - 20, f"Refund Invoice #{data.invoice_number}")
+        canvas.setFont("Helvetica", 5)
+        canvas.drawString(15, page_height - 28, f"Refund ID: {data.refund_id}")
+        canvas.drawString(15, page_height - 35, f"Date: {created_str}")
+        canvas.drawString(15, page_height - 42, f"Auction: {data.auction}")
+        canvas.drawString(15, page_height - 49, f"Total Items: {total_items}")
+        canvas.drawString(15, page_height - 56, f"Page {doc.page}")
 
         # Company Info (right side)
-        y = page_height - 40
-        canvas.setFont("Helvetica", 8)
-        canvas.drawRightString(page_width - 30, y - 12, "Ruito Trading Inc.")
-        canvas.drawRightString(page_width - 30, y - 22, "3495 Laird Road, Unit 10")
-        canvas.drawRightString(page_width - 30, y - 32, "Mississauga, ON L5L 5S5")
-        canvas.drawRightString(page_width - 30, y - 42, "905-828-8881")
+        y = page_height - 20
+        canvas.setFont("Helvetica", 5)
+        canvas.drawRightString(page_width - 15, y - 8, "Ruito Trading Inc.")
+        canvas.drawRightString(page_width - 15, y - 14, "3495 Laird Road, Unit 10")
+        canvas.drawRightString(page_width - 15, y - 20, "Mississauga, ON L5L 5S5")
+        canvas.drawRightString(page_width - 15, y - 26, "905-828-8881")
         canvas.restoreState()
 
+    # Custom onPage function to pass page info
+    def on_page(canvas, doc):
+        current_page = canvas.getPageNumber()
+        print(f"Current Page: {current_page}")
+        header(canvas, doc, current_page)
+        
     # Layout: Create frame that doesn't overlap header
-    frame_margin_top = 100  # keep room for header
+    header_height = 0.7 * inch  # Increased space for header (about 70 pixels)
+    bottom_margin = 0.15 * inch
     frame = Frame(
-        x1=0.3 * inch,
-        y1=0.4 * inch,
-        width=page_width - 0.6 * inch,
-        height=page_height - 0.4 * inch - frame_margin_top,
+        x1=0.15 * inch,
+        y1=0.15 * inch,
+        width=page_width - 0.3 * inch,
+        height=page_height - header_height - bottom_margin,
         id='normal'
     )
-
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=(page_width, page_height),
-        rightMargin=0.3 * inch,
-        leftMargin=0.3 * inch,
-        topMargin=frame_margin_top,
-        bottomMargin=0.4 * inch
-    )
-
-    # Add custom template with header
-    template = PageTemplate(id='RefundTemplate', frames=[frame], onPage=header)
-    doc.addPageTemplates([template])
-
+    
+    template = PageTemplate(id='RefundTemplate', frames=[frame], onPage=on_page)
+    
     # Build table data
     table_data = [[
         Paragraph("<b>Lot#</b>", styles["ItemText"]),
@@ -74,12 +71,14 @@ def generate_refund_invoice_pdf(data: RefundInvoice):
         Paragraph("<b></b>", styles["ItemText"]),
     ]]
 
-    total_refund = 0.0
+    if not data.order_items:
+        raise ValueError("No order items found in the provided data.")
+
+    total_refund = data.total_refund_amount
     for item in data.order_items:
         status = item.other_status if item.after_ordered_status == "Other" else item.after_ordered_status
         complete_str = "✔" if item.complete else "✘"
         refund_amount = item.refund_amount
-        total_refund += refund_amount
 
         table_data.append([
             Paragraph(f"{item.lot} ({item.item_number})", styles["ItemText"]),
@@ -88,24 +87,34 @@ def generate_refund_invoice_pdf(data: RefundInvoice):
             Paragraph(complete_str, styles["ItemText"]),
         ])
 
-    table = Table(table_data, colWidths=[1.0 * inch, 1.6 * inch, 0.6 * inch, 0.5 * inch])
+    table = Table(table_data, colWidths=[0.8 * inch, 1.2 * inch, 0.5 * inch, 0.35 * inch])
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("LINEBELOW", (0, 0), (-1, -1), 0.3, colors.grey),
+        ("LINEBELOW", (0, 0), (-1, -1), 0.2, colors.grey),
         ("ALIGN", (2, 1), (2, -1), "RIGHT"),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("LEFTPADDING", (0, 0), (-1, -1), 3),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 3),
+        ("FONTSIZE", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 2),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 2),
     ]))
 
     elements = [
-        Spacer(1, 12),
+        Spacer(1, 6),
         table,
-        Spacer(1, 10),
+        Spacer(1, 6),
         Paragraph(f"Total Refund Amount:  ${total_refund:.2f}", styles["RightAlign"])
     ]
 
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=(page_width, page_height),
+        rightMargin=0.15 * inch,
+        leftMargin=0.15 * inch,
+        topMargin=header_height,
+        bottomMargin=bottom_margin,
+    )
+    
+    doc.addPageTemplates([template])
     doc.build(elements)
 
     pdf = buffer.getvalue()
@@ -113,7 +122,7 @@ def generate_refund_invoice_pdf(data: RefundInvoice):
     return pdf
 
 
-def generate_problem_item_pdf(data: RefundInvoice):
+def generate_problem_item_pdf(data: RefundInvoiceModel):
     # Define your data
     invoice_number = data.invoice_number
 
@@ -142,4 +151,3 @@ def generate_problem_item_pdf(data: RefundInvoice):
     buffer.close()
     return pdf_data
 
- 
