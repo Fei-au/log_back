@@ -3,9 +3,11 @@ from datetime import datetime
 import pytz
 from app.db.mongodb import db_refunds
 from typing import List, Optional
-from app.graphql.types.refund import RefundInvoiceModel, RefundInvoiceCreateOutput, RefundInvoiceCreateInput, RefundInvoiceQueryOutput, OrderItem, voidRefundInvoiceInput, CompleteRefundInvoiceInput
+from app.graphql.types.model.refund import RefundInvoiceModel, OrderItem
+from app.graphql.types.output.refund import RefundInvoiceCreateOutput, RefundInvoiceQueryOutput
+from app.graphql.types.input.refund import RefundInvoiceCreateInput, voidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
-from app.graphql.types.base import BaseInsertOneResponse, BaseUpdateOneResponse
+from app.graphql.types.output.base import BaseUpdateOneResponse
 from app.tools.gcp_tools import upload_blob, generate_signed_url
 
 def map_dict_to_refund_invoice(doc: dict) -> RefundInvoiceQueryOutput:
