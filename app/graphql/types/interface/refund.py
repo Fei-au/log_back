@@ -9,7 +9,7 @@ class RefundInvoiceBase:
     # invoice_number + yymmdd + timestamp last four digit
     refund_id: str
     order_id: int
-    invoice_number: int
+    invoice_number: str
     auction: int
     order_items: List[OrderItem]
     created_at: str

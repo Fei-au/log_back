@@ -12,7 +12,7 @@ class Query:
     @strawberry.field
     async def refund_invoices(
         self, 
-        invoice_number: Optional[int]=None,
+        invoice_number: Optional[str]=None,
         has_completed: Optional[bool]=None,
         voided: Optional[bool]=None,
         limit: int = 10,

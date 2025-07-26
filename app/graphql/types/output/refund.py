@@ -16,7 +16,7 @@ class RefundInvoiceQueryOutput:
     _id: strawberry.ID
     refund_id: str
     order_id: int
-    invoice_number: int
+    invoice_number: str
     auction: int
     order_items: List[OrderItem]
     created_at: str

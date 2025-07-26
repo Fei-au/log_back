@@ -15,6 +15,7 @@ origins = [
     "http://manage.ruitotrading.com",
     "https://manage.ruitotrading.com",
     "http://192.168.217.1:3001",
+    "http://192.168.0.247:3001",
 ]
 
 BASE_DIR = Path(__file__).resolve().parent.parent

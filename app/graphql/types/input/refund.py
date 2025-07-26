@@ -25,7 +25,7 @@ class OrderItemInput:
 class RefundInvoiceCreateInput:
     # order id
     order_id: int
-    invoice_number: int
+    invoice_number: str
     auction: int
     order_items: List[OrderItemInput]
     total_refund_amount: float
