@@ -4,8 +4,8 @@ import pytz
 from app.db.mongodb import db_refunds
 from typing import List, Optional
 from app.graphql.types.model.refund import RefundInvoiceModel, OrderItem
-from app.graphql.types.output.refund import RefundInvoiceCreateOutput, RefundInvoiceQueryOutput
-from app.graphql.types.input.refund import RefundInvoiceCreateInput, voidRefundInvoiceInput, CompleteRefundInvoiceInput
+from app.graphql.types.output.refund import RefundInvoiceCreateOutput, RefundInvoiceQueryOutput, RefundInvoiceTotalOutput, RefundInvoiceEnhancedOutput
+from app.graphql.types.input.refund import QueryInput, RefundInvoiceCreateInput, voidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
 from app.graphql.types.output.base import BaseUpdateOneResponse
 from app.tools.gcp_tools import upload_blob, generate_signed_url
@@ -14,30 +14,34 @@ def map_dict_to_refund_invoice(doc: dict) -> RefundInvoiceQueryOutput:
     order_items = doc.pop('order_items')
     return RefundInvoiceQueryOutput(**doc, order_items=[OrderItem(**order_item) for order_item in order_items])
 
-async def refund_invoices(
-    invoice_number: Optional[int],
-    has_completed: Optional[bool], 
-    voided: Optional[bool],
-    limit: int,
-    offset: int
-    ) -> List[RefundInvoiceQueryOutput]:
+async def refund_invoices(input: QueryInput) -> RefundInvoiceEnhancedOutput:
     refunds_collection = db_refunds["refunds"]
+    invoice_number = input.invoice_number
+    has_completed = input.has_completed
+    has_voided = input.has_voided
+    limit = input.limit
+    offset = input.offset
     query = {}
     if has_completed is not None:
         query["has_completed"] = has_completed
-    if voided is not None:
-        query["has_voided"] = voided
+    if has_voided is not None:
+        query["has_voided"] = has_voided
     if invoice_number:
         query["invoice_number"] = invoice_number
-    
-    if invoice_number:
-        cursor = refunds_collection.find(query).sort("created_at", -1)
+    if limit is not None and offset is not None:
+        cursor = refunds_collection.find(query).skip(offset).limit(limit).sort("created_at", -1)
     else:
-        cursor = refunds_collection.find(query).skip(offset).limit(limit)
+        cursor = refunds_collection.find(query).sort("created_at", -1)
+    total = await refunds_collection.count_documents(query)
     refund_invoices_list = []
     async for doc in cursor:
         refund_invoices_list.append(map_dict_to_refund_invoice(doc))
-    return refund_invoices_list
+    return RefundInvoiceEnhancedOutput(data=refund_invoices_list, total=total)
+
+async def refund_invoice_total_resolver() -> RefundInvoiceTotalOutput:
+    refunds_collection = db_refunds["refunds"]
+    total_count = await refunds_collection.count_documents({})
+    return RefundInvoiceTotalOutput(total=total_count)
 
 async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> RefundInvoiceCreateOutput:
     refunds_collection = db_refunds["refunds"]

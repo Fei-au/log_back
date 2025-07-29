@@ -8,6 +8,10 @@ class RefundInvoiceCreateOutput:
     signed_refund_path: str
     signed_problem_item_path: str
     inserted_id: str
+    
+@strawberry.type
+class RefundInvoiceTotalOutput:
+    total: int
 
 @strawberry.type
 class RefundInvoiceQueryOutput:
@@ -39,3 +43,9 @@ class RefundInvoiceQueryOutput:
     def signed_problem_item_path(self) -> Optional[str]:
         # Logic to generate signed URL for problem_item_path
         return generate_signed_url(self.problem_item_path)
+
+@strawberry.type
+class RefundInvoiceEnhancedOutput:
+    data: List[RefundInvoiceQueryOutput]
+    total: int
+    

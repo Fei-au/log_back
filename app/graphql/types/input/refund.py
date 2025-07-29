@@ -2,6 +2,15 @@ import strawberry
 from typing import List, Optional
 
 @strawberry.input
+class QueryInput:
+    invoice_number: Optional[str] = None
+    has_completed: Optional[bool] = None
+    has_voided: Optional[bool] = None
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+        
+
+@strawberry.input
 class OrderItemInput:
     # Order item id
     id: int
@@ -10,9 +19,9 @@ class OrderItemInput:
     item_number: str
     lot: str
     pure_price: float
-    tax: float
-    handling_fee: float
-    premium_fee: float
+    tax: Optional[float] = None
+    handling_fee: Optional[float] = None
+    premium_fee: Optional[float] = None
     total_price: float
     refund_amount: float
     after_ordered_status: str
@@ -35,9 +44,7 @@ class RefundInvoiceCreateInput:
 @strawberry.input
 class voidRefundInvoiceInput:
     refund_id: str
-    has_voided: bool
     
 @strawberry.input
 class CompleteRefundInvoiceInput:
     refund_id: str
-    has_completed: bool
