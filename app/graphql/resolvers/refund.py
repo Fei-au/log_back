@@ -4,12 +4,13 @@ import pytz
 from app.db.mongodb import db_refunds
 from typing import List, Optional
 from app.graphql.types.model.refund import RefundInvoiceModel, OrderItem
-from app.graphql.types.output.refund import RefundInvoiceCreateOutput, RefundInvoiceQueryOutput, RefundInvoiceTotalOutput, RefundInvoiceEnhancedOutput
-from app.graphql.types.input.refund import QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput
+from app.graphql.types.output.refund import ExportCsvOutput, RefundInvoiceCreateOutput, RefundInvoiceQueryOutput, RefundInvoiceTotalOutput, RefundInvoiceEnhancedOutput
+from app.graphql.types.input.refund import ExportCsvInput, QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
 from app.graphql.types.output.base import BaseUpdateOneResponse
 from app.tools.gcp_tools import upload_blob, generate_signed_url
 from decimal import Decimal
+from app.tools.generate_csv import generate_export_csv
 from app.tools.generate_pdf import generate_refund_invoice_pdf, generate_problem_item_pdf
 
 
@@ -45,6 +46,20 @@ async def refund_invoice_total_resolver() -> RefundInvoiceTotalOutput:
     refunds_collection = db_refunds["refunds"]
     total_count = await refunds_collection.count_documents({})
     return RefundInvoiceTotalOutput(total=total_count)
+
+async def export_invoices_to_csv_resolver(input: ExportCsvInput) -> ExportCsvOutput:
+    refunds_collection = db_refunds["refunds"]
+    ids = input.ids
+    if not ids:
+        raise ValueError("No IDs provided for export.")
+
+    cursor = refunds_collection.find({"refundId": {"$in": ids}})
+    refund_invoices_list = []
+    async for doc in cursor:
+        refund_invoices_list.append(map_dict_to_refund_invoice(doc))
+    temp_ins = RefundInvoiceEnhancedOutput(data=refund_invoices_list, total=len(refund_invoices_list))
+    link = generate_export_csv(temp_ins)
+    return ExportCsvOutput(signed_csv_path=link)
 
 async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> RefundInvoiceCreateOutput:
     refunds_collection = db_refunds["refunds"]

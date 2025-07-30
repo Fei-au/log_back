@@ -8,6 +8,10 @@ class QueryInput:
     has_voided: Optional[bool] = None
     limit: Optional[int] = None
     offset: Optional[int] = None
+    
+@strawberry.input
+class ExportCsvInput:
+    ids: List[str]
         
 
 @strawberry.input

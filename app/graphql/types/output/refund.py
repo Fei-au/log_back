@@ -12,6 +12,10 @@ class RefundInvoiceCreateOutput:
 @strawberry.type
 class RefundInvoiceTotalOutput:
     total: int
+    
+@strawberry.type
+class ExportCsvOutput:
+    signed_csv_path: str
 
 @strawberry.type
 class RefundInvoiceQueryOutput:
