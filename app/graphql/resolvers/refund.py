@@ -5,10 +5,13 @@ from app.db.mongodb import db_refunds
 from typing import List, Optional
 from app.graphql.types.model.refund import RefundInvoiceModel, OrderItem
 from app.graphql.types.output.refund import RefundInvoiceCreateOutput, RefundInvoiceQueryOutput, RefundInvoiceTotalOutput, RefundInvoiceEnhancedOutput
-from app.graphql.types.input.refund import QueryInput, RefundInvoiceCreateInput, voidRefundInvoiceInput, CompleteRefundInvoiceInput
+from app.graphql.types.input.refund import QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
 from app.graphql.types.output.base import BaseUpdateOneResponse
 from app.tools.gcp_tools import upload_blob, generate_signed_url
+from decimal import Decimal
+from app.tools.generate_pdf import generate_refund_invoice_pdf, generate_problem_item_pdf
+
 
 def map_dict_to_refund_invoice(doc: dict) -> RefundInvoiceQueryOutput:
     order_items = doc.pop('order_items')
@@ -72,13 +75,14 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
                 other_status=item_input.other_status,
                 pickup_time=item_input.pickup_time,
                 sold_time=item_input.sold_time,
-                complete=item_input.complete
+                # complete=item_input.complete
             )
         )
         
-    has_completed=all(item_input.complete for item_input in input.order_items)
-    total = sum(item_input.refund_amount for item_input in input.order_items)
-    if total != input.total_refund_amount:
+    # has_completed=all(item_input.complete for item_input in input.order_items)
+    total = [Decimal(str(item_input.refund_amount)) for item_input in input.order_items]
+    total = sum(total, Decimal('0.00'))
+    if total != Decimal(str(input.total_refund_amount)):
         raise ValueError(f"Total refund amount {input.total_refund_amount} does not match the sum of item refunds {total}")
     new_refund_invoice = RefundInvoiceModel(
         _id=new_id,
@@ -88,15 +92,14 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
         auction=input.auction,
         order_items=order_items_output,
         created_at=created_at,
-        has_completed=has_completed,
-        completed_time=created_at if has_completed else None,
+        has_completed=input.has_completed,
+        completed_time=created_at if input.has_completed else None,
         total_refund_amount=input.total_refund_amount,
         has_voided=False,
         staff_user_id=input.staff_user_id,
         staff_name=input.staff_name,
     )
     
-    from app.tools.generate_pdf import generate_refund_invoice_pdf, generate_problem_item_pdf
     pdf_bytes = generate_refund_invoice_pdf(new_refund_invoice)
     problem_item_pdf = generate_problem_item_pdf(new_refund_invoice)
     refund_invoice_path = upload_blob(pdf_bytes, new_refund_invoice.invoice_number, new_refund_invoice.refund_id, None)
@@ -113,12 +116,20 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
     return RefundInvoiceCreateOutput(signed_refund_path=signed_refund_path, signed_problem_item_path=signed_problem_item_path, inserted_id=str(res.inserted_id))
     
 
-async def void_refund_invoice_resolver(input: voidRefundInvoiceInput) -> BaseUpdateOneResponse:
+async def void_refund_invoice_resolver(input: VoidRefundInvoiceInput) -> BaseUpdateOneResponse:
     refunds_collection = db_refunds["refunds"]
+    # Check if already voided
+    existing_refund = await refunds_collection.find_one({"refund_id": input.refund_id, "has_voided": True})
+    if existing_refund:
+        raise ValueError("This refund invoice has already been voided.")
     res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"has_voided": True, "voided_time": datetime.now(pytz.utc).isoformat()}})
     return BaseUpdateOneResponse(modified_count=res.modified_count)
 
 async def complete_refund_invoice_resolver(input: CompleteRefundInvoiceInput) -> BaseUpdateOneResponse:
     refunds_collection = db_refunds["refunds"]
+    # Check if already completed
+    existing_refund = await refunds_collection.find_one({"refund_id": input.refund_id, "has_completed": True})
+    if existing_refund:
+        raise ValueError("This refund invoice has already been completed.")
     res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"has_completed": True, "completed_time": datetime.now(pytz.utc).isoformat()}})
     return BaseUpdateOneResponse(modified_count=res.modified_count)

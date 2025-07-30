@@ -28,7 +28,7 @@ class OrderItemInput:
     other_status: Optional[str] = None
     pickup_time: Optional[str] = None
     sold_time: Optional[str] = None
-    complete: bool = False
+    # complete: bool = False
 
 @strawberry.input
 class RefundInvoiceCreateInput:
@@ -36,13 +36,14 @@ class RefundInvoiceCreateInput:
     order_id: int
     invoice_number: str
     auction: int
+    has_completed: bool
     order_items: List[OrderItemInput]
     total_refund_amount: float
     staff_user_id: int
     staff_name: str
 
 @strawberry.input
-class voidRefundInvoiceInput:
+class VoidRefundInvoiceInput:
     refund_id: str
     
 @strawberry.input

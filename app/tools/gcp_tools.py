@@ -25,9 +25,6 @@ def upload_blob(file_bytes, invoice_number, refund_id, name):
 
     blob.upload_from_string(file_bytes, content_type="application/pdf", if_generation_match=generation_match_precondition)
     
-    print(
-        f"File uploaded to {destination_blob_name}."
-    )
     return destination_blob_name
 
 

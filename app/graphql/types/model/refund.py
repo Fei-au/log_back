@@ -21,7 +21,7 @@ class OrderItem:
     other_status: Optional[str]
     pickup_time: Optional[str]
     sold_time: Optional[str]
-    complete: bool=False
+    # complete: bool=False
 
 # mongodb refund invoice model
 @strawberry.type
