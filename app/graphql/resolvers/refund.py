@@ -8,7 +8,7 @@ from app.graphql.types.output.refund import ExportCsvOutput, RefundInvoiceCreate
 from app.graphql.types.input.refund import ExportCsvInput, QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
 from app.graphql.types.output.base import BaseUpdateOneResponse
-from app.tools.gcp_tools import upload_blob, generate_signed_url
+from app.tools.gcp_tools import generate_refund_file_name, upload_blob, generate_signed_url
 from decimal import Decimal
 from app.tools.generate_csv import generate_export_csv
 from app.tools.generate_pdf import generate_refund_invoice_pdf, generate_problem_item_pdf
@@ -53,12 +53,21 @@ async def export_invoices_to_csv_resolver(input: ExportCsvInput) -> ExportCsvOut
     if not ids:
         raise ValueError("No IDs provided for export.")
 
-    cursor = refunds_collection.find({"refundId": {"$in": ids}})
+    cursor = refunds_collection.find({"refund_id": {"$in": ids}})
     refund_invoices_list = []
     async for doc in cursor:
         refund_invoices_list.append(map_dict_to_refund_invoice(doc))
     temp_ins = RefundInvoiceEnhancedOutput(data=refund_invoices_list, total=len(refund_invoices_list))
-    link = generate_export_csv(temp_ins)
+    csv_path = generate_export_csv(temp_ins)
+    refunds_collection_exported = db_refunds["refunds_exported"]
+    current_time = datetime.now(pytz.utc)
+    export_record = {
+        "exported_at": current_time.isoformat(),
+        "signed_csv_path": csv_path,
+        "ids": ids
+    }
+    await refunds_collection_exported.insert_one(export_record)
+    link = generate_signed_url(csv_path)
     return ExportCsvOutput(signed_csv_path=link)
 
 async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> RefundInvoiceCreateOutput:
@@ -99,6 +108,7 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
     total = sum(total, Decimal('0.00'))
     if total != Decimal(str(input.total_refund_amount)):
         raise ValueError(f"Total refund amount {input.total_refund_amount} does not match the sum of item refunds {total}")
+    is_additional = await refunds_collection.count_documents({"invoice_number": input.invoice_number}) > 0
     new_refund_invoice = RefundInvoiceModel(
         _id=new_id,
         refund_id=refund_id,
@@ -113,12 +123,15 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
         has_voided=False,
         staff_user_id=input.staff_user_id,
         staff_name=input.staff_name,
+        is_additional=is_additional,
     )
     
     pdf_bytes = generate_refund_invoice_pdf(new_refund_invoice)
     problem_item_pdf = generate_problem_item_pdf(new_refund_invoice)
-    refund_invoice_path = upload_blob(pdf_bytes, new_refund_invoice.invoice_number, new_refund_invoice.refund_id, None)
-    problem_item_path = upload_blob(problem_item_pdf, new_refund_invoice.invoice_number, new_refund_invoice.refund_id, "problem_item")
+    refund_invoice_name = generate_refund_file_name(new_refund_invoice.invoice_number, new_refund_invoice.refund_id, None)
+    problem_item_name = generate_refund_file_name(new_refund_invoice.invoice_number, new_refund_invoice.refund_id, "problem_item")
+    refund_invoice_path = upload_blob(pdf_bytes, content_type='application/pdf', destination_blob_name=refund_invoice_name)
+    problem_item_path = upload_blob(problem_item_pdf, content_type='application/pdf', destination_blob_name=problem_item_name)
 
     new_refund_invoice.refund_invoice_path = refund_invoice_path
     new_refund_invoice.problem_item_path = problem_item_path

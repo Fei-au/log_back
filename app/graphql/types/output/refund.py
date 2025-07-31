@@ -37,6 +37,7 @@ class RefundInvoiceQueryOutput:
     staff_name: str
     refund_invoice_path: Optional[str] = None
     problem_item_path: Optional[str] = None
+    is_additional: bool
 
     @strawberry.field
     def signed_refund_invoice_path(self) -> Optional[str]:

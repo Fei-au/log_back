@@ -6,10 +6,11 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from datetime import datetime
 from app.graphql.types.model.refund import RefundInvoiceModel
+from reportlab.lib.enums import TA_CENTER
 
 
-page_width, page_height = 3.15 * inch, 2 * inch
-header_height = 0.9 * inch
+page_width, page_height = 2.85 * inch, 2 * inch
+header_height = 0.57 * inch
 
 def draw_image_overlay(canvas: canvas.Canvas, doc):
     data = getattr(doc, '_data', None)
@@ -34,22 +35,18 @@ def draw_header(canvas: canvas.Canvas, doc):
     
   
     canvas.saveState()
-    canvas.setFont("Helvetica-Bold", 9)
-    canvas.drawString(15, page_height - 20, f"Refund Invoice #{data.invoice_number}")
-    canvas.setFont("Helvetica", 5)
-    canvas.drawString(15, page_height - 28, f"Refund ID: {data.refund_id}")
-    canvas.drawString(15, page_height - 35, f"Date: {created_str}")
-    canvas.drawString(15, page_height - 42, f"Auction: {data.auction}")
-    canvas.drawString(15, page_height - 49, f"Total Items: {total_item_count}")
-    canvas.drawString(15, page_height - 56, f"Page {doc.page}")
+    canvas.setFont("Helvetica-Bold", 8)
+    canvas.drawString(12, page_height - 15, f"Refund Invoice #{data.invoice_number}")
+    y = page_height - 15
+    canvas.setFont("Helvetica", 6)
+    canvas.drawString(12, y - 6, f"Refund ID: {data.refund_id}")
+    canvas.drawString(12, y - 12, f"Date: {created_str}")
 
     # Company Info (right side)
-    y = page_height - 20
-    canvas.setFont("Helvetica", 5)
-    canvas.drawRightString(page_width - 15, y - 8, "Ruito Trading Inc.")
-    canvas.drawRightString(page_width - 15, y - 14, "3495 Laird Road, Unit 10")
-    canvas.drawRightString(page_width - 15, y - 20, "Mississauga, ON L5L 5S5")
-    canvas.drawRightString(page_width - 15, y - 26, "905-828-8881")
+    canvas.setFont("Helvetica", 6)
+    canvas.drawRightString(page_width - 12, y - 6, f"Auction: {data.auction}")
+    canvas.drawRightString(page_width - 12, y - 12, f"Total Items: {total_item_count}")
+    canvas.drawRightString(page_width - 12, y - 18, f"Page {doc.page}")
     canvas.restoreState()
         
 class RefundInvoicePDFTemplate(BaseDocTemplate):
@@ -71,23 +68,27 @@ def generate_refund_invoice_pdf(data: RefundInvoiceModel):
 
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name="Small", fontSize=6, leading=6))
-    styles.add(ParagraphStyle(name="RightAlign", fontSize=7, leading=7, alignment=2))
-    styles.add(ParagraphStyle(name="ItemHeader", fontSize=7, leading=7, fontName="Helvetica-Bold"))
-    styles.add(ParagraphStyle(name="ItemText", fontSize=7, leading=7))
+    styles.add(ParagraphStyle(name="ItemHeader", fontSize=6, leading=6, fontName="Helvetica-Bold"))
+    item_text_style = ParagraphStyle(name="ItemText", fontSize=8, leading=8, fontName="Helvetica-Bold")
+    styles.add(ParagraphStyle(name="RightAlign", parent=item_text_style, alignment=2))
+    styles.add(item_text_style)
+
 
     # Build table data
-    table_data = [[
-        Paragraph("<b>Lot#</b>", styles["ItemHeader"]),
-        Paragraph("<b>Description</b>", styles["ItemHeader"]),
-        Paragraph("<b>Refund</b>", styles["ItemHeader"]),
-    ]]
+    table_data = [
+        [
+            Paragraph("<b>Lot#</b>", styles["ItemHeader"]),
+            Paragraph("<b>Description</b>", styles["ItemHeader"]),
+            Paragraph("<b>Refund</b>", styles["ItemHeader"]),
+        ]
+    ]
 
     if not data.order_items:
         raise ValueError("No order items found in the provided data.")
 
     total_refund = data.total_refund_amount
     for item in data.order_items:
-        status = item.other_status if item.after_ordered_status == "Other" else item.after_ordered_status
+        status = item.after_ordered_status + (', ' + item.other_status if item.other_status else '')
         refund_amount = item.refund_amount
 
         table_data.append([
@@ -96,12 +97,13 @@ def generate_refund_invoice_pdf(data: RefundInvoiceModel):
             Paragraph(f"${refund_amount}", styles["ItemText"]),
         ])
 
-    table = Table(table_data, colWidths=[0.8 * inch, 1.55 * inch, 0.5 * inch], )
+    table = Table(table_data, colWidths=[0.75 * inch, 1.45 * inch, 0.41 * inch], rowHeights=[3* mm] + [None] * (len(table_data)-1))
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("LINEBELOW", (0, 0), (-1, -1), 0.1, colors.grey),
+        ("LINEBELOW", (0, 0), (-1, -1), 1.0, colors.grey),
         ("ALIGN", (2, 1), (2, -1), "RIGHT"),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("VALIGN", (0, 0), (-1, 0), "MIDDLE"),  # Vertically center the header row
+        ("VALIGN", (0, 1), (-1, -1), "TOP"),  # Vertically align the content rows to the top
         # ("FONTSIZE", (0, 0), (-1, -1), 1.0),  # Reduced font size from 6 to 2.4
         ("LEFTPADDING", (0, 0), (-1, -1), 2),
         ("RIGHTPADDING", (0, 0), (-1, -1), 2),
@@ -122,8 +124,8 @@ def generate_refund_invoice_pdf(data: RefundInvoiceModel):
     doc = RefundInvoicePDFTemplate(
         buffer,
         pagesize=(page_width, page_height),
-        rightMargin=0.15 * inch,
-        leftMargin=0.15 * inch,
+        rightMargin=0.12 * inch,
+        leftMargin=0.12 * inch,
         topMargin=header_height,
         bottomMargin=0,
     )

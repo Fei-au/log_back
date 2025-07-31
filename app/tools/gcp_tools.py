@@ -8,7 +8,7 @@ def get_bucket():
     bucket = storage_client.bucket("rtmedia")
     return bucket
 
-def generate_blob_name(invoice_number, refund_id, name):
+def generate_refund_file_name(invoice_number, refund_id, name):
     current_time = datetime.now(tz=utc)
     full_path = f"refund/{current_time.strftime('%Y-%m-%d')}/{invoice_number}-{refund_id}"
     if name:
@@ -16,17 +16,16 @@ def generate_blob_name(invoice_number, refund_id, name):
     full_path += ".pdf"
     return full_path
 
-def upload_blob(file_bytes, invoice_number, refund_id, name):
-    destination_blob_name = generate_blob_name(invoice_number, refund_id, name)
+def generate_refund_export_csv_name():
+    current_time = datetime.now(tz=utc)
+    return f"refund/exported_history/{current_time.strftime('%Y%m%d_%H%M%S')}.csv"
+
+def upload_blob(file_bytes, content_type, destination_blob_name):
     bucket = get_bucket()
     blob = bucket.blob(destination_blob_name)
-
     generation_match_precondition = 0
-
-    blob.upload_from_string(file_bytes, content_type="application/pdf", if_generation_match=generation_match_precondition)
-    
+    blob.upload_from_string(file_bytes, content_type=content_type, if_generation_match=generation_match_precondition)
     return destination_blob_name
-
 
 def generate_signed_url(refund_invoice_path):
     bucket = get_bucket()
