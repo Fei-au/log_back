@@ -1,4 +1,4 @@
-from reportlab.platypus import SimpleDocTemplate, BaseDocTemplate, Paragraph, Spacer, Table, TableStyle, Frame, PageTemplate
+from reportlab.platypus import SimpleDocTemplate, BaseDocTemplate, Paragraph, Spacer, Table, TableStyle, Frame, PageTemplate, PageBreak
 from reportlab.lib.units import inch, mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
@@ -9,8 +9,8 @@ from app.graphql.types.model.refund import RefundInvoiceModel
 from reportlab.lib.enums import TA_CENTER
 
 
-page_width, page_height = 2.85 * inch, 2 * inch
-header_height = 0.57 * inch
+page_width, page_height = 70 * mm, 50 * mm
+header_height = 17 * mm
 
 def draw_image_overlay(canvas: canvas.Canvas, doc):
     data = getattr(doc, '_data', None)
@@ -36,17 +36,17 @@ def draw_header(canvas: canvas.Canvas, doc):
   
     canvas.saveState()
     canvas.setFont("Helvetica-Bold", 8)
-    canvas.drawString(12, page_height - 15, f"Refund Invoice #{data.invoice_number}")
-    y = page_height - 15
+    y = page_height - 20
+    canvas.drawString(12, y, f"Refund Invoice #{data.invoice_number}")
     canvas.setFont("Helvetica", 6)
-    canvas.drawString(12, y - 6, f"Refund ID: {data.refund_id}")
-    canvas.drawString(12, y - 12, f"Date: {created_str}")
+    canvas.drawString(12, y - 7, f"Refund ID: {data.refund_id}")
+    canvas.drawString(12, y - 14, f"Date: {created_str}")
 
     # Company Info (right side)
     canvas.setFont("Helvetica", 6)
-    canvas.drawRightString(page_width - 12, y - 6, f"Auction: {data.auction}")
-    canvas.drawRightString(page_width - 12, y - 12, f"Total Items: {total_item_count}")
-    canvas.drawRightString(page_width - 12, y - 18, f"Page {doc.page}")
+    canvas.drawRightString(page_width - 12, y - 7, f"Auction: {data.auction}")
+    canvas.drawRightString(page_width - 12, y - 14, f"Total Items: {total_item_count}")
+    canvas.drawRightString(page_width - 12, y - 21, f"Page {doc.page}")
     canvas.restoreState()
         
 class RefundInvoicePDFTemplate(BaseDocTemplate):
@@ -54,9 +54,9 @@ class RefundInvoicePDFTemplate(BaseDocTemplate):
         super().__init__(filename, **kwargs)
         
         frame = Frame(
-            x1=0.15 * inch,
-            y1=0.15 * inch,
-            width=page_width - 0.3 * inch,
+            x1=4 * mm,
+            y1=4 * mm,
+            width=page_width - 8 * mm,
             height=page_height - header_height,
             id='normal'
         )
@@ -94,13 +94,14 @@ def generate_refund_invoice_pdf(data: RefundInvoiceModel):
         table_data.append([
             Paragraph(f"{item.lot} ({item.item_number})", styles["ItemText"]),
             Paragraph(status, styles["ItemText"]),
-            Paragraph(f"${refund_amount}", styles["ItemText"]),
+            Paragraph(f"{refund_amount}", styles["ItemText"]),
         ])
 
-    table = Table(table_data, colWidths=[0.75 * inch, 1.45 * inch, 0.41 * inch], rowHeights=[3* mm] + [None] * (len(table_data)-1))
+    table = Table(table_data, colWidths=[22 * mm, 28 * mm, 12 * mm], rowHeights=[3 * mm] + [None] * (len(table_data)-1))
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("LINEBELOW", (0, 0), (-1, -1), 1.0, colors.grey),
+        # Background removed
+        ("BOX", (0, 0), (-1, -1), 0.5, colors.black),  # Box around the entire table
+        ("LINEBELOW", (0, 0), (-1, -1), 0.2, colors.black),
         ("ALIGN", (2, 1), (2, -1), "RIGHT"),
         ("VALIGN", (0, 0), (-1, 0), "MIDDLE"),  # Vertically center the header row
         ("VALIGN", (0, 1), (-1, -1), "TOP"),  # Vertically align the content rows to the top
@@ -124,8 +125,8 @@ def generate_refund_invoice_pdf(data: RefundInvoiceModel):
     doc = RefundInvoicePDFTemplate(
         buffer,
         pagesize=(page_width, page_height),
-        rightMargin=0.12 * inch,
-        leftMargin=0.12 * inch,
+        rightMargin=3 * mm,
+        leftMargin=3 * mm,
         topMargin=header_height,
         bottomMargin=0,
     )
@@ -147,24 +148,69 @@ def generate_problem_item_pdf(data: RefundInvoiceModel):
     # Create a buffer or a file
     buffer = BytesIO()  # Or use "output.pdf" to write to file directly
 
-    # Set up canvas size: 3.15 x 2.00 inches
-    width = 3.15 * inch
-    height = 2.00 * inch
-    c = canvas.Canvas(buffer, pagesize=(width, height))
+    # Set up canvas size: 2.85 x 2.00 inches
+    width = 70 * mm
+    height = 50 * mm
 
+    # Use SimpleDocTemplate instead of direct canvas for better text handling
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=(width, height),
+        rightMargin=0.1 * inch,
+        leftMargin=0.1 * inch,
+        topMargin=0.1 * inch,
+        bottomMargin=0.1 * inch,
+    )
+    
+    # Create styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        name='TitleStyle', 
+        parent=styles['Heading4'],
+        fontSize=12,
+        fontName="Helvetica-Bold",
+    )
+    # item_style = ParagraphStyle(
+    #     name='ItemStyle', 
+    #     parent=styles['Normal'],
+    #     fontSize=12,
+    #     fontName="Helvetica-Bold",
+    # )
+    # status_style = ParagraphStyle(
+    #     name='StatusStyle', 
+    #     parent=styles['Normal'],
+    #     fontSize=12,
+    #     fontName="Helvetica-Bold",
+    # )
+    
+    # Generate all pages
+    all_elements = []
+    
     for item in data.order_items:
-        text_y = height - 0.3 * inch
-        line_spacing = 0.3 * inch
-
-        c.drawString(0.2 * inch, text_y, f"Invoice #: {invoice_number}")
-        c.drawString(0.2 * inch, text_y - line_spacing, f"Item #: {item.item_number}")
-        c.drawString(0.2 * inch, text_y - 2 * line_spacing, f"Status: {item.after_ordered_status if item.after_ordered_status != 'Other' else item.other_status}")
+        # Start a new page for each item
+        elements = []
         
-        c.showPage()  # Finish current page and start a new one
+        # Add item number
+        elements.append(Paragraph(f"Item: {item.item_number}", title_style))
+        
+        # Add invoice info with large bold font
+        elements.append(Paragraph(f"Invoice: #{invoice_number}", title_style))
+        
+        # Add status with text wrapping
+        status_text = item.after_ordered_status if item.after_ordered_status != 'Other' else item.other_status
+        elements.append(Paragraph(f"Status: {status_text}", title_style))
+        
+        all_elements.extend(elements)
+        all_elements.append(PageBreak())
+    
+    # Remove the last page break
+    if all_elements:
+        all_elements.pop()
+    
+    # Build the document
+    doc.build(all_elements)
 
-    c.save()
-
-    # If using BytesIO, get the value
+    # Get the PDF data
     pdf_data = buffer.getvalue()
     buffer.close()
     return pdf_data
