@@ -10,18 +10,18 @@ def generate_export_csv(d: RefundInvoiceEnhancedOutput) -> bytes:
     output = StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        "Refund ID",
-        "Invoice Number",
+        "ID",
+        "Invoice No.",
         "Auction",
-        "Order Items Count",
-        "Created At",
-        "Has Completed",
+        "Item Count",
+        "Created",
+        "Completed",
         "Completed Time",
-        "Has Voided",
+        "Voided",
         "Voided Time",
-        "Staff Name",
-        "Total Refund Amount",
-        "Signed Refund Invoice Path"
+        "Staff",
+        "Refund Amount",
+        "Link"
     ])
     total_invoices = len(d.data)
     total_refund_items = len([item for row in d.data for item in row.order_items])
