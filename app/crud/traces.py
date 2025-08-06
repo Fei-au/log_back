@@ -1,5 +1,5 @@
 from app.db.mongodb import db_traces
-from app.schemas.traces import OrderItem
+from app.models.traces import OrderItem
 
 
 async def insert_order_item(order_item: OrderItem):

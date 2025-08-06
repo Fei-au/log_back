@@ -4,13 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 import os
 from pathlib import Path
+from strawberry.fastapi import GraphQLRouter
+from app.graphql.schema import schema
 
 app = FastAPI()
+
+graphql_app = GraphQLRouter(schema)
     
 origins = [
     "http://manage.ruitotrading.com",
     "https://manage.ruitotrading.com",
     "http://192.168.217.1:3001",
+    "http://192.168.0.247:3001",
 ]
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,5 +35,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Log Back API!"}
+
 app.include_router(logs.router, prefix="/logs",  tags=["Logs"])
 app.include_router(traces.router, prefix="/traces",  tags=["traces"])
+app.include_router(graphql_app, prefix="/graphql",  tags=["graphql"])

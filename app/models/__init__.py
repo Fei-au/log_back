@@ -1,1 +1,1 @@
-# Define relational database models
+# Define database models
