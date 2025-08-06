@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 class OrderItem(BaseModel):
     trace_id: str
-    invoice_number: str  # str or int
+    invoice_number: Union[str, int]  # str or int
     order_id:  int
     item_number: str
     order_item_id: Optional[int] = None
