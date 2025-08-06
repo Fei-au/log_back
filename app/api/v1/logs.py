@@ -1,5 +1,6 @@
 from fastapi import HTTPException, APIRouter
-from app.schemas.logs import ItemLogRequest, LogModel, ItemLogResponse, LogResponse, FilterBidderTxnsModel, LogBidderBlockModel
+from app.schemas.logs import ItemLogRequest, ItemLogResponse, LogResponse
+from app.models.logs import LogModel, FilterBidderTxnsModel, LogBidderBlockModel
 from app.crud.logs import insert_bids, insert_transaction, insert_filter_txn, insert_block_bidder
 import logging
 from app.schemas.base import ResponseBase, InsertOneResponse
