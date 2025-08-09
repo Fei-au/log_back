@@ -127,6 +127,11 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
     )
     
     pdf_bytes = generate_refund_invoice_pdf(new_refund_invoice)
+    # Save pdf_bytes locally
+    # inv_local_path = save_bytes_to_file(pdf_bytes, new_refund_invoice.invoice_number)
+    # inv_public_url = get_public_url(inv_local_path)
+    # pi_local_path = save_bytes_to_file(problem_item_pdf, new_refund_invoice.invoice_number + '_problem_item')
+    # pi_public_url = get_public_url(pi_local_path)
     problem_item_pdf = generate_problem_item_pdf(new_refund_invoice)
     refund_invoice_name = generate_refund_file_name(new_refund_invoice.invoice_number, new_refund_invoice.refund_id, None)
     problem_item_name = generate_refund_file_name(new_refund_invoice.invoice_number, new_refund_invoice.refund_id, "problem_item")
@@ -141,10 +146,16 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
 
     res = await refunds_collection.insert_one(asdict(new_refund_invoice))
     
-    return RefundInvoiceCreateOutput(signed_refund_path=signed_refund_path, signed_problem_item_path=signed_problem_item_path, inserted_id=str(res.inserted_id))
+    return RefundInvoiceCreateOutput(
+        signed_refund_path=signed_refund_path,
+        signed_problem_item_path=signed_problem_item_path,
+        # temp_problem_item_path=pi_public_url,
+        # temp_refund_path=inv_public_url,
+        inserted_id=str(res.inserted_id)
+    )
     
-
 async def void_refund_invoice_resolver(input: VoidRefundInvoiceInput) -> BaseUpdateOneResponse:
+    
     refunds_collection = db_refunds["refunds"]
     # Check if already voided
     existing_refund = await refunds_collection.find_one({"refund_id": input.refund_id, "has_voided": True})

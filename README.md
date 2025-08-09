@@ -1,8 +1,9 @@
 # log_back
 
 ## Start app
-```
-uvicorn app.main:app --reload
+``` shell
+# Now assume this is the gateway 8008, and later if we have gateway, this project use 8001
+uvicorn app.main:app --reload --port 8008
 ```
 
 ## Start for local android emulator

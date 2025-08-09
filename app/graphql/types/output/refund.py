@@ -7,6 +7,8 @@ from app.tools.gcp_tools import generate_signed_url
 class RefundInvoiceCreateOutput:
     signed_refund_path: str
     signed_problem_item_path: str
+    # temp_problem_item_path: str
+    # temp_refund_path: str
     inserted_id: str
     
 @strawberry.type
