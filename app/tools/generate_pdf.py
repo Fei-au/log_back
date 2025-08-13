@@ -199,7 +199,7 @@ def generate_problem_item_pdf(data: RefundInvoiceModel):
         elements.append(Paragraph(f"Invoice: #{invoice_number}", title_style))
         
         # Add status with text wrapping
-        status_text = item.after_ordered_status if item.after_ordered_status != 'Other' else item.other_status
+        status_text = f'{item.after_ordered_status}, {item.other_status}' if item.other_status else item.after_ordered_status
         elements.append(Paragraph(f"Status: {status_text}", title_style))
         
         all_elements.extend(elements)

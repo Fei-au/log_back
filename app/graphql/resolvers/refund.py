@@ -12,6 +12,7 @@ from app.tools.gcp_tools import generate_refund_file_name, upload_blob, generate
 from decimal import Decimal
 from app.tools.generate_csv import generate_export_csv
 from app.tools.generate_pdf import generate_refund_invoice_pdf, generate_problem_item_pdf
+from app.core.config import celery_app
 
 
 def map_dict_to_refund_invoice(doc: dict) -> RefundInvoiceQueryOutput:
@@ -145,7 +146,10 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
     signed_problem_item_path = generate_signed_url(problem_item_path)
 
     res = await refunds_collection.insert_one(asdict(new_refund_invoice))
-    
+    celery_app.send_task(
+        'inventory.tasks.update_items', 
+        [{'id': item.item_id, 'status_note': f'{item.after_ordered_status} {item.other_status}' if item.other_status else item.after_ordered_status} for item in input.order_items]
+    )
     return RefundInvoiceCreateOutput(
         signed_refund_path=signed_refund_path,
         signed_problem_item_path=signed_problem_item_path,

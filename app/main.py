@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from strawberry.fastapi import GraphQLRouter
 from app.graphql.schema import schema
+from app.core.config import celery_app
 
 app = FastAPI()
 
@@ -40,6 +41,11 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Log Back API!"}
+
+@app.get("/test")
+async def test():
+    celery_app.send_task('orders.tasks.test_success', args=[1,2,3])
+    return {"message": "Test endpoint is working!"}
 
 app.include_router(logs.router, prefix="/logs",  tags=["Logs"])
 app.include_router(traces.router, prefix="/traces",  tags=["traces"])
