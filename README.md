@@ -7,7 +7,7 @@ uvicorn app.main:app --reload
 
 ## Start for local android emulator
 ```
-uvicorn app.main:app --reload --host 192.168.0.17 --port 8001
+uvicorn app.main:app --reload --host 192.168.0.247 --port 8001
 ```
 
 ## Deploy
