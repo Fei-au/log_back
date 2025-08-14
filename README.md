@@ -11,12 +11,15 @@ uvicorn app.main:app --reload --host 192.168.0.247 --port 8001
 ```
 
 ## Deploy
-```
-// Activate venv
+```shell
+# 1. Activate venv
 source .venv/bin/activate
-// Start fastapi at background
+# 2. Set GOOGLE_APPLICATION_CREDENTIALS
+export GOOGLE_APPLICATION_CREDENTIALS=/var/www/log_back/glass-gasket-415918-b30506c4d63f.json
+# 3. Start fastapi at background
 nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --timeout-keep-alive 60 > uvicorn.log 2>&1 &
-// Start gRPC
+#
+# Start gRPC
 nohup python -m app.gRPC.server > grpc_nohup.log 2>&1 &
 ```
 
