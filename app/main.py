@@ -7,7 +7,11 @@ from pathlib import Path
 from strawberry.fastapi import GraphQLRouter
 from app.graphql.schema import schema
 
-app = FastAPI()
+app = FastAPI(
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
+)
 
 graphql_app = GraphQLRouter(schema)
     
