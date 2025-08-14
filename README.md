@@ -14,9 +14,11 @@ uvicorn app.main:app --reload --host 192.168.0.247 --port 8001
 ```shell
 # 1. Activate venv
 source .venv/bin/activate
-# 2. Set GOOGLE_APPLICATION_CREDENTIALS
+# 2. Install dependencies
+pip install -r requirments.txt
+# 3. Set GOOGLE_APPLICATION_CREDENTIALS
 export GOOGLE_APPLICATION_CREDENTIALS=/var/www/log_back/some.json
-# 3. Start fastapi at background
+# 4. Start fastapi at background
 nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4 --timeout-keep-alive 60 > uvicorn.log 2>&1 &
 #
 # Start gRPC
