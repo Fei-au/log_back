@@ -1,3 +1,4 @@
+import uuid
 from reportlab.platypus import SimpleDocTemplate, BaseDocTemplate, Paragraph, Spacer, Table, TableStyle, Frame, PageTemplate, PageBreak
 from reportlab.lib.units import inch, mm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -6,11 +7,12 @@ from reportlab.pdfgen import canvas
 from io import BytesIO
 from datetime import datetime
 from app.graphql.types.model.refund import RefundInvoiceModel
+from app.core.config import settings
 from reportlab.lib.enums import TA_CENTER
 
 
 page_width, page_height = 70 * mm, 50 * mm
-header_height = 17 * mm
+header_height = 16 * mm
 
 def draw_image_overlay(canvas: canvas.Canvas, doc):
     data = getattr(doc, '_data', None)
@@ -43,10 +45,10 @@ def draw_header(canvas: canvas.Canvas, doc):
     canvas.drawString(12, y - 14, f"Date: {created_str}")
 
     # Company Info (right side)
-    canvas.setFont("Helvetica", 6)
-    canvas.drawRightString(page_width - 12, y - 7, f"Auction: {data.auction}")
-    canvas.drawRightString(page_width - 12, y - 14, f"Total Items: {total_item_count}")
-    canvas.drawRightString(page_width - 12, y - 21, f"Page {doc.page}")
+    canvas.setFont("Helvetica-Bold", 6)
+    canvas.drawRightString(page_width - 12, y, f"Auction: {data.auction}")
+    canvas.drawRightString(page_width - 12, y - 7, f"Total Items: {total_item_count}")
+    canvas.drawRightString(page_width - 12, y - 14, f"Page: {doc.page}")
     canvas.restoreState()
         
 class RefundInvoicePDFTemplate(BaseDocTemplate):
@@ -197,7 +199,7 @@ def generate_problem_item_pdf(data: RefundInvoiceModel):
         elements.append(Paragraph(f"Invoice: #{invoice_number}", title_style))
         
         # Add status with text wrapping
-        status_text = item.after_ordered_status if item.after_ordered_status != 'Other' else item.other_status
+        status_text = f'{item.after_ordered_status}, {item.other_status}' if item.other_status else item.after_ordered_status
         elements.append(Paragraph(f"Status: {status_text}", title_style))
         
         all_elements.extend(elements)
@@ -215,3 +217,12 @@ def generate_problem_item_pdf(data: RefundInvoiceModel):
     buffer.close()
     return pdf_data
 
+# def save_bytes_to_file(pdf_data, invoice_number):
+#     file_path = f"/refund_invoice/{invoice_number}-{uuid.uuid4()}.pdf"
+#     filename = f"{settings.media_dir}{file_path}"
+#     with open(filename, "wb") as f:
+#         f.write(pdf_data)
+#     return file_path
+
+# def get_public_url(file_path):
+#     return f"{settings.media_host}/{file_path}"
