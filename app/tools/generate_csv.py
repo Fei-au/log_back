@@ -10,54 +10,57 @@ def generate_export_csv(d: RefundInvoiceEnhancedOutput) -> bytes:
     output = StringIO()
     writer = csv.writer(output)
     writer.writerow([
-        "ID",
-        "Invoice No.",
+        "Inv No.",
         "Auction",
-        "Item Count",
+        "Count",
         "Created",
-        "Completed",
-        "Completed Time",
-        "Voided",
-        "Voided Time",
         "Staff",
-        "Refund Amount",
-        "Link"
+        "Discount",
+        "Total"
     ])
     total_invoices = len(d.data)
     total_refund_items = len([item for row in d.data for item in row.order_items])
     total_refund_amount = sum([Decimal(str(row.total_refund_amount)) for row in d.data], Decimal('0.00'))
-    for row in d.data:
+    for i, row in enumerate(d.data):
         created_at_utc = datetime.fromisoformat(row.created_at) 
         created_at_toronto = created_at_utc.astimezone(timezone('America/Toronto'))
         formatted_created_at = created_at_toronto.strftime('%Y-%m-%d %H:%M:%S')
 
         writer.writerow([
-            row.refund_id,
-            '(Dup) ' + row.invoice_number if row.is_additional else row.invoice_number,
+            str(i + 1) + '-' + ('(Dup) ' + row.invoice_number if row.is_additional else row.invoice_number),
             row.auction,
             len(row.order_items),
             formatted_created_at,
-            "Yes" if row.has_completed else "No",
-            row.completed_time,
-            "Yes" if row.has_voided else "No",
-            row.voided_time,
             row.staff_name,
+            "",
             row.total_refund_amount,
-            row.signed_refund_invoice_path(),
         ])
+        for index, item in enumerate(row.order_items):
+            writer.writerow([
+                "",
+                item.item_number,
+                str(index + 1) + ' of ' + str(len(row.order_items)),
+                item.after_ordered_status,
+                item.other_status,
+                item.refund_amount,
+            ])
     writer.writerow([
+        "Summary",
         "",
+        "",
+        "",
+        "",
+        "",
+        "",
+    ])
+    writer.writerow([
         total_invoices,
         "",
         total_refund_items,
         "",
         "",
         "",
-        "",
-        "",
-        "",
         total_refund_amount,
-        "",
     ])
         
     file_name = generate_refund_export_csv_name()
