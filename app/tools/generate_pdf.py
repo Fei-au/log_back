@@ -41,8 +41,8 @@ def draw_header(canvas: canvas.Canvas, doc):
     y = page_height - 20
     canvas.drawString(12, y, f"Refund Invoice #{data.invoice_number}")
     canvas.setFont("Helvetica", 6)
-    canvas.drawString(12, y - 7, f"Refund ID: {data.refund_id}")
-    canvas.drawString(12, y - 14, f"Date: {created_str}")
+    canvas.drawString(12, y - 7, f"Date: {created_str}")
+    canvas.drawString(12, y - 14, f"Staff: {data.staff_name[:3]}")
 
     # Company Info (right side)
     canvas.setFont("Helvetica-Bold", 6)
@@ -90,7 +90,7 @@ def generate_refund_invoice_pdf(data: RefundInvoiceModel):
 
     total_refund = data.total_refund_amount
     for item in data.order_items:
-        status = item.after_ordered_status + (', ' + item.other_status if item.other_status else '')
+        status = item.after_ordered_status
         refund_amount = item.refund_amount
 
         table_data.append([
