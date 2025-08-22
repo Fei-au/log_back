@@ -16,7 +16,7 @@ uvicorn app.main:app --reload --host 192.168.0.247 --port 8001
 # 1. Activate venv
 source .venv/bin/activate
 # 2. Install dependencies
-pip install -r requirments.txt
+pip install -r requirements.txt
 # 3. Set GOOGLE_APPLICATION_CREDENTIALS
 export GOOGLE_APPLICATION_CREDENTIALS=/var/www/log_back/some.json
 # 4. Start fastapi at background
