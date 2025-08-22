@@ -10,7 +10,8 @@ class Settings(BaseSettings):
     # media_dir: str
     # media_host: str
     broker_url: str
-    
+    genai_api_key: str
+        
     model_config = SettingsConfigDict(env_file='.env')
     
 settings = Settings()

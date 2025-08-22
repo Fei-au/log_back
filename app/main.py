@@ -46,10 +46,16 @@ app.add_middleware(
 async def root():
     return {"message": "Welcome to the Log Back API!"}
 
-@app.get("/test")
-async def test():
-    celery_app.send_task('orders.tasks.test_success', args=[1,2,3])
-    return {"message": "Test endpoint is working!"}
+# @app.get("/test/celery")
+# async def test():
+#     celery_app.send_task('orders.tasks.test_success', args=[1,2,3])
+#     return {"message": "Test endpoint is working!"}
+
+@app.post("/test/genai")
+async def test_genai(description: str):
+    from app.tools.gcp_tools import test_ai_response
+    response = test_ai_response(description)
+    return {"message": response}
 
 app.include_router(logs.router, prefix="/logs",  tags=["Logs"])
 app.include_router(traces.router, prefix="/traces",  tags=["traces"])
