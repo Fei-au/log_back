@@ -9,7 +9,7 @@ from datetime import datetime
 from app.graphql.types.model.refund import RefundInvoiceModel
 from app.core.config import settings
 from reportlab.lib.enums import TA_CENTER
-
+import pytz
 
 page_width, page_height = 70 * mm, 50 * mm
 header_height = 16 * mm
@@ -120,7 +120,8 @@ def generate_refund_invoice_pdf(data: RefundInvoiceModel):
 
 
     created_dt = datetime.fromisoformat(data.created_at)
-    created_str = created_dt.strftime("%Y-%m-%d %H:%M:%S")
+    created_dt_toronto = created_dt.astimezone(pytz.timezone("America/Toronto"))
+    created_str = created_dt_toronto.strftime("%Y-%m-%d %H:%M:%S")
     total_item_count = len(data.order_items)
     buffer = BytesIO()
     
