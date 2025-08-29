@@ -45,3 +45,5 @@ class RefundInvoiceModel:
     refund_invoice_path: Optional[str] = None
     problem_item_path: Optional[str] = None
     is_additional: bool = False
+    is_store_credit: bool = False
+    refund_email: Optional[str] = None

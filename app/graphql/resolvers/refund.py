@@ -40,6 +40,8 @@ async def refund_invoices(input: QueryInput) -> RefundInvoiceEnhancedOutput:
     total = await refunds_collection.count_documents(query)
     refund_invoices_list = []
     async for doc in cursor:
+        doc["is_store_credit"] = doc.get("is_store_credit", None)
+        doc["refund_email"] = doc.get("refund_email", None)
         refund_invoices_list.append(map_dict_to_refund_invoice(doc))
     return RefundInvoiceEnhancedOutput(data=refund_invoices_list, total=total)
 
@@ -125,6 +127,8 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
         staff_user_id=input.staff_user_id,
         staff_name=input.staff_name,
         is_additional=is_additional,
+        is_store_credit=input.is_store_credit,
+        refund_email=input.refund_email
     )
     
     pdf_bytes = generate_refund_invoice_pdf(new_refund_invoice)

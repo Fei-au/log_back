@@ -45,6 +45,8 @@ class RefundInvoiceCreateInput:
     total_refund_amount: float
     staff_user_id: int
     staff_name: str
+    is_store_credit: bool
+    refund_email: Optional[str] = None
 
 @strawberry.input
 class VoidRefundInvoiceInput:
