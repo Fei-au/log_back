@@ -12,7 +12,7 @@ from reportlab.lib.enums import TA_CENTER
 import pytz
 
 page_width, page_height = 70 * mm, 50 * mm
-header_height = 16 * mm
+header_height = 17.5 * mm
 
 def draw_image_overlay(canvas: canvas.Canvas, doc):
     data = getattr(doc, '_data', None)
@@ -43,9 +43,14 @@ def draw_header(canvas: canvas.Canvas, doc):
     canvas.setFont("Helvetica", 6)
     canvas.drawString(12, y - 7, f"Date: {created_str}")
     canvas.drawString(12, y - 14, f"Staff: {data.staff_name[:3]}")
+    
+    canvas.setFont("Helvetica-Bold", 6)
+    if data.is_store_credit:
+        canvas.drawString(12, y - 21, "Refund to store credit")
+    elif data.refund_email:
+        canvas.drawString(12, y - 21, f"Refund to: {data.refund_email}")
 
     # Company Info (right side)
-    canvas.setFont("Helvetica-Bold", 6)
     canvas.drawRightString(page_width - 12, y, f"Auction: {data.auction}")
     canvas.drawRightString(page_width - 12, y - 7, f"Total Items: {total_item_count}")
     canvas.drawRightString(page_width - 12, y - 14, f"Page: {doc.page}")
