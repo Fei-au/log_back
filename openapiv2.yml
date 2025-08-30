@@ -1,0 +1,487 @@
+swagger: "2.0"
+info:
+  title: FastAPI
+  version: 0.1.0
+x-google-backend:
+  address: https://log.ruitotrading.com
+x-google-management:
+  metrics:
+    - name: "requests-per-minute"
+      displayName: "Requests per minute"
+      valueType: INT64
+      metricKind: DELTA
+  quota:
+    limits:
+      - name: "requests-per-minute"
+        metric: "requests-per-minute"
+        unit: "1/min/{project}"
+        values:
+          STANDARD: 100
+securityDefinitions:
+  api_key:
+    type: "apiKey"
+    name: "key"
+    in: "query"
+security:
+  - api_key: []
+paths:
+  /:
+    get:
+      summary: Root
+      operationId: root__get
+      x-google-quota:
+        metricCosts:
+          "requests-per-minute": 1
+      responses:
+        "200":
+          description: Successful Response
+          schema: {}
+  /test/genai:
+    post:
+      summary: Test Genai
+      operationId: test_genai_test_genai_post
+      parameters:
+        - name: description
+          in: query
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Successful Response
+          schema: {}
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /logs/items:
+    post:
+      tags:
+        - Logs
+      summary: Create Item Logs
+      operationId: create_item_logs_logs_items_post
+      parameters:
+        - name: body
+          in: body
+          description: ItemLog object that needs to be created
+          required: true
+          schema:
+            $ref: '#/definitions/ItemLogRequest'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ItemLogResponse'
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /logs/transaction:
+    post:
+      tags:
+        - Logs
+      summary: Complete Log
+      operationId: complete_log_logs_transaction_post
+      parameters:
+        - name: body
+          in: body
+          description: Complete log transaction
+          required: true
+          schema:
+            $ref: '#/definitions/LogModel'
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/LogResponse'
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /logs/block_bidder_log:
+    post:
+      tags:
+        - Logs
+      summary: Block Bidder Log
+      operationId: block_bidder_log_logs_block_bidder_log__post
+      parameters:
+        - name: body
+          in: body
+          description: Block bidder
+          schema:
+            $ref: '#/definitions/LogBidderBlockModel'
+          required: true
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResponseBase_InsertOneResponse_'
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /logs/filter_bidder_txns:
+    post:
+      tags:
+        - Logs
+      summary: Add Filter Bidder Txns
+      operationId: add_filter_bidder_txns_logs_filter_bidder_txns__post
+      parameters:
+        - name: body
+          in: body
+          description: Add filter bidder transaction
+          schema:
+            $ref: '#/definitions/FilterBidderTxnsModel'
+          required: true
+      responses:
+        '200':
+          description: Successful Response
+          schema:
+            $ref: '#/definitions/ResponseBase_InsertOneResponse_'
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /traces/order_item:
+    post:
+      tags:
+        - traces
+      summary: Order Item
+      operationId: order_item_traces_order_item__post
+      parameters:
+        - name: body
+          in: body
+          description: log order item click
+          schema:
+            $ref: '#/definitions/OrderItem'
+          required: true
+      responses:
+        '200':
+          description: Order Item
+          schema:
+            $ref: '#/definitions/ResponseBase_InsertOneResponse_'
+        '422':
+          description: Validation Error
+          schema:
+            $ref: '#/definitions/HTTPValidationError'
+  /graphql:
+    get:
+      tags:
+        - graphql
+      summary: Handle Http Get
+      operationId: handle_http_get_graphql_get
+      responses:
+        '200':
+          description: The GraphiQL integrated development environment.
+          schema: {}
+        '404':
+          description: Not found if GraphiQL or query via GET are not enabled.
+    post:
+      tags:
+        - graphql
+      summary: Handle Http Post
+      operationId: handle_http_post_graphql_post
+      responses:
+        '200':
+          description: Successful Response
+          schema: {}
+definitions:
+  FilterBidderTxnsModel:
+    type: object
+    properties:
+      transaction_id:
+        type: string
+        title: Transaction Id
+      automation_link:
+        type: string
+        title: Automation Link
+      timestamp:
+        type: string
+        format: date-time
+        title: Timestamp
+      client:
+        type: string
+        title: Client
+      status:
+        $ref: '#/definitions/Status'
+      checked_bidder_count:
+        type: integer
+        title: Checked Bidder Count
+      blocked_bidder_count:
+        type: integer
+        title: Blocked Bidder Count
+      message:
+        type: string
+        title: Message
+    required:
+      - transaction_id
+      - automation_link
+      - timestamp
+      - status
+      - checked_bidder_count
+      - blocked_bidder_count
+    title: FilterBidderTxnsModel
+  HTTPValidationError:
+    properties:
+      detail:
+        items:
+          $ref: '#/definitions/ValidationError'
+        type: array
+        title: Detail
+    type: object
+    title: HTTPValidationError
+  InsertOneResponse:
+    properties:
+      inserted_id:
+        type: string
+        title: Inserted Id
+    type: object
+    required:
+      - inserted_id
+    title: InsertOneResponse
+  ItemLog:
+    type: object
+    properties:
+      transaction_id:
+        type: integer
+        title: Transaction Id
+      automation_link:
+        type: string
+        title: Automation Link
+      lot:
+        type: string
+        title: Lot
+      client:
+        type: string
+        title: Client
+      target_price:
+        type: number
+        title: Target Price
+      previous_price:
+        type: string
+        title: Previous Price
+      status:
+        type: string
+        title: Status
+      timestamp:
+        type: string
+        format: date-time
+        title: Timestamp
+    required:
+      - lot
+      - target_price
+      - status
+      - timestamp
+    title: ItemLog
+  ItemLogRequest:
+    properties:
+      transaction_id:
+        type: string
+        title: Transaction Id
+      items:
+        items:
+          $ref: '#/definitions/ItemLog'
+        type: array
+        title: Items
+      automation_link:
+        type: string
+        title: Automation Link
+      client:
+        type: string
+        title: Client
+    type: object
+    required:
+      - transaction_id
+      - items
+      - automation_link
+      - client
+    title: ItemLogRequest
+  ItemLogResponse:
+    properties:
+      status:
+        type: string
+        title: Status
+      batch_size:
+        type: integer
+        title: Batch Size
+      item_log_ids:
+        type: array
+        items:
+          type: integer
+        title: Item Log Ids
+    type: object
+    required:
+      - status
+      - batch_size
+      - item_log_ids
+    title: ItemLogResponse
+  LogBidderBlockModel:
+    properties:
+      transaction_id:
+        title: Transaction Id
+      automation_link:
+        title: Automation Link
+      timestamp:
+        type: string
+        format: date-time
+        title: Timestamp
+      client:
+        title: Client
+      bidder_id:
+        type: string
+        title: Bidder Id
+      status:
+        $ref: '#/definitions/Status'
+      message:
+        title: Message
+    type: object
+    required:
+      - timestamp
+      - bidder_id
+      - status
+    title: LogBidderBlockModel
+  LogModel:
+    type: object
+    properties:
+      transaction_id:
+        type: string
+        title: Transaction Id
+      automation_link:
+        type: string
+        title: Automation Link
+      timestamp:
+        type: string
+        format: date-time
+        title: Timestamp
+      client:
+        type: string
+        title: Client
+      action:
+        type: string
+        title: Action
+      success:
+        type: boolean
+        title: Success
+      message:
+        title: Message
+      cust_win_count:
+        type: integer
+        title: Cust Win Count
+      cust_win_increased_price:
+        type: number
+        title: Cust Win Increased Price
+      bot_win_count:
+        type: integer
+        title: Bot Win Count
+      bot_win_increased_price:
+        type: number
+        title: Bot Win Increased Price
+    required:
+      - transaction_id
+      - automation_link
+      - timestamp
+      - action
+      - success
+      - cust_win_count
+      - cust_win_increased_price
+      - bot_win_count
+      - bot_win_increased_price
+    title: LogModel
+  LogResponse:
+    properties:
+      status:
+        type: string
+        title: Status
+      log_id:
+        type: string
+        title: Log Id
+    type: object
+    required:
+      - status
+      - log_id
+    title: LogResponse
+  OrderItem:
+    properties:
+      trace_id:
+        type: string
+        title: Trace Id
+      invoice_number:
+        type: string
+        title: Invoice Number
+      order_id:
+        type: integer
+        title: Order Id
+      item_number:
+        type: string
+        title: Item Number
+      order_item_id:
+        type: integer
+        title: Order Item Id
+      is_scanned:
+        type: boolean
+        title: Is Scanned
+        default: false
+      is_ticked:
+        type: boolean
+        title: Is Ticked
+        default: false
+      is_in_invoice:
+        type: boolean
+        title: Is In Invoice
+      sold_time:
+        type: string
+        title: Sold Time
+      note:
+        type: string
+        title: Note
+    type: object
+    required:
+      - trace_id
+      - invoice_number
+      - order_id
+      - item_number
+      - is_in_invoice
+      - sold_time
+    title: OrderItem
+  ResponseBase_InsertOneResponse_:
+    properties:
+      status:
+        type: string
+        title: Status
+        default: success
+      message:
+        type: string
+        title: Message
+        default: OK
+      data:
+        $ref: '#/definitions/InsertOneResponse'
+    type: object
+    required:
+      - data
+    title: ResponseBase[InsertOneResponse]
+  Status:
+    type: string
+    enum:
+      - success
+      - failed
+      - skip
+    title: Status
+  ValidationError:
+    properties:
+      loc:
+        type: array
+        items:
+          type: string
+        title: Location
+      msg:
+        type: string
+        title: Message
+      type:
+        type: string
+        title: Error Type
+    type: object
+    required:
+      - loc
+        - msg
+        - type
+    title: ValidationError
+
