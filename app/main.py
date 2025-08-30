@@ -9,9 +9,9 @@ from app.graphql.schema import schema
 from app.core.config import celery_app
 
 app = FastAPI(
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None
+    # docs_url=None,
+    # redoc_url=None,
+    # openapi_url=None
 )
 
 graphql_app = GraphQLRouter(schema)
