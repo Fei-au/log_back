@@ -24,6 +24,7 @@ async def refund_invoices(input: QueryInput) -> RefundInvoiceEnhancedOutput:
     invoice_number = input.invoice_number
     has_completed = input.has_completed
     has_voided = input.has_voided
+    is_store_credit = input.is_store_credit
     limit = input.limit
     offset = input.offset
     query = {}
@@ -33,6 +34,8 @@ async def refund_invoices(input: QueryInput) -> RefundInvoiceEnhancedOutput:
         query["has_voided"] = has_voided
     if invoice_number:
         query["invoice_number"] = invoice_number
+    if is_store_credit:
+        query["is_store_credit"] = is_store_credit
     if limit is not None and offset is not None:
         cursor = refunds_collection.find(query).skip(offset).limit(limit).sort("created_at", -1)
     else:

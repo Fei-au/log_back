@@ -6,6 +6,7 @@ class QueryInput:
     invoice_number: Optional[str] = None
     has_completed: Optional[bool] = None
     has_voided: Optional[bool] = None
+    is_store_credit: Optional[bool] = None
     limit: Optional[int] = None
     offset: Optional[int] = None
     
