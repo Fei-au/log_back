@@ -10,7 +10,7 @@ storage_client = storage.Client()
 genai_client = genai.Client(api_key=settings.genai_api_key)
 
 def get_bucket():
-    bucket = storage_client.bucket("rtmedia")
+    bucket = storage_client.bucket("rt-management")
     return bucket
 
 def generate_refund_file_name(invoice_number, refund_id, name):
