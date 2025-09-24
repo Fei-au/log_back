@@ -22,6 +22,13 @@ def generate_export_csv(d: RefundInvoiceEnhancedOutput) -> bytes:
     total_invoices = len(d.data)
     total_refund_items = len([item for row in d.data for item in row.order_items])
     total_refund_amount = sum([Decimal(str(row.total_refund_amount)) for row in d.data], Decimal('0.00'))
+    static = {
+        "Missing": 0,
+        "Wrong": 0,
+        "Broken": 0,
+        "Used": 0
+    }
+    total = 0
     for i, row in enumerate(d.data):
         created_at_utc = datetime.fromisoformat(row.created_at) 
         created_at_toronto = created_at_utc.astimezone(timezone('America/Toronto'))
@@ -35,7 +42,8 @@ def generate_export_csv(d: RefundInvoiceEnhancedOutput) -> bytes:
             row.staff_name,
             "",
             row.total_refund_amount,
-            "Store credit" if row.is_store_credit else (row.refund_email if row.refund_email else "")
+            (row.invoice_payment_status if row.invoice_payment_status else "") \
+                + (", Store credit" if row.is_store_credit else ((', '+row.refund_email) if row.refund_email else ""))
         ])
         for index, item in enumerate(row.order_items):
             writer.writerow([
@@ -46,6 +54,11 @@ def generate_export_csv(d: RefundInvoiceEnhancedOutput) -> bytes:
                 item.other_status,
                 item.refund_amount,
             ])
+            total += 1
+            if item.after_ordered_status in static:
+                static[item.after_ordered_status] += 1
+            else:
+                static["Wrong"] += 1
     writer.writerow([
         "Summary",
         "",
@@ -64,6 +77,25 @@ def generate_export_csv(d: RefundInvoiceEnhancedOutput) -> bytes:
         "",
         total_refund_amount,
     ])
+    writer.writerow([
+        "Problem",
+        "Count",
+        "Percentage",
+        "",
+        "",
+        "",
+        "",
+    ])
+    for key, value in static.items():
+        writer.writerow([
+            key,
+            value,
+            str(round(value / total * 100, 2) if total > 0 else 0) + '%',
+            "",
+            "",
+            "",
+            ""
+        ])
         
     file_name = generate_refund_export_csv_name()
     destination_file_name = upload_blob(output.getvalue(), "text/csv", file_name)

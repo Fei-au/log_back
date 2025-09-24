@@ -131,7 +131,8 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
         staff_name=input.staff_name,
         is_additional=is_additional,
         is_store_credit=input.is_store_credit,
-        refund_email=input.refund_email
+        refund_email=input.refund_email,
+        invoice_payment_status=input.invoice_payment_status
     )
     
     pdf_bytes = generate_refund_invoice_pdf(new_refund_invoice)

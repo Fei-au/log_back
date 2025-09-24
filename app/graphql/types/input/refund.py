@@ -48,6 +48,7 @@ class RefundInvoiceCreateInput:
     staff_name: str
     is_store_credit: bool
     refund_email: Optional[str] = None
+    invoice_payment_status: Optional[str] = None
 
 @strawberry.input
 class VoidRefundInvoiceInput:
