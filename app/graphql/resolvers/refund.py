@@ -156,7 +156,14 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
     res = await refunds_collection.insert_one(asdict(new_refund_invoice))
     celery_app.send_task(
         'inventory.tasks.update_items', 
-        [{'id': item.item_id, 'status_note': f'{item.after_ordered_status} {item.other_status}' if item.other_status else item.after_ordered_status} for item in input.order_items]
+        [
+            {
+                'id': item.item_id, 
+                'status_note': f'{item.after_ordered_status} {item.other_status}' if item.other_status else item.after_ordered_status
+            } 
+            for item in input.order_items 
+            if item.after_ordered_status != 'Missing'
+        ]
     )
     return RefundInvoiceCreateOutput(
         signed_refund_path=signed_refund_path,
