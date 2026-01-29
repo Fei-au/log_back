@@ -57,3 +57,7 @@ class VoidRefundInvoiceInput:
 @strawberry.input
 class CompleteRefundInvoiceInput:
     refund_id: str
+
+@strawberry.input
+class MarkAsStoreCreditRefundInvoiceInput:
+    refund_id: str

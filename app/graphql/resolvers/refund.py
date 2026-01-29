@@ -5,7 +5,7 @@ from app.db.mongodb import db_refunds
 from typing import List, Optional
 from app.graphql.types.model.refund import RefundInvoiceModel, OrderItem
 from app.graphql.types.output.refund import ExportCsvOutput, RefundInvoiceCreateOutput, RefundInvoiceQueryOutput, RefundInvoiceTotalOutput, RefundInvoiceEnhancedOutput
-from app.graphql.types.input.refund import ExportCsvInput, QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput
+from app.graphql.types.input.refund import ExportCsvInput, MarkAsStoreCreditRefundInvoiceInput, QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput
 from dataclasses import asdict
 from app.graphql.types.output.base import BaseUpdateOneResponse
 from app.tools.gcp_tools import generate_refund_file_name, upload_blob, generate_signed_url
@@ -190,4 +190,13 @@ async def complete_refund_invoice_resolver(input: CompleteRefundInvoiceInput) ->
     if existing_refund:
         raise ValueError("This refund invoice has already been completed.")
     res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"has_completed": True, "completed_time": datetime.now(pytz.utc).isoformat()}})
+    return BaseUpdateOneResponse(modified_count=res.modified_count)
+
+async def mark_as_store_credit_refund_invoice_resolver(input: MarkAsStoreCreditRefundInvoiceInput) -> BaseUpdateOneResponse:
+    refunds_collection = db_refunds["refunds"]
+    # Check if already marked as store credit
+    existing_refund = await refunds_collection.find_one({"refund_id": input.refund_id, "is_store_credit": True})
+    if existing_refund:
+        raise ValueError("This refund invoice has already been marked as store credit.")
+    res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"is_store_credit": True}})
     return BaseUpdateOneResponse(modified_count=res.modified_count)
