@@ -1,8 +1,8 @@
 import strawberry
-from app.graphql.resolvers.refund import mark_as_store_credit_refund_invoice_resolver, refund_invoice_total_resolver, refund_invoices
+from app.graphql.resolvers.refund import mark_as_store_credit_refund_invoice_resolver, refund_invoice_total_resolver, refund_invoices, update_refund_total_resolver
 from typing import List
 from app.graphql.types.output.refund import ExportCsvOutput, RefundInvoiceCreateOutput, RefundInvoiceEnhancedOutput, RefundInvoiceTotalOutput
-from app.graphql.types.input.refund import ExportCsvInput, MarkAsStoreCreditRefundInvoiceInput, QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput
+from app.graphql.types.input.refund import ExportCsvInput, MarkAsStoreCreditRefundInvoiceInput, QueryInput, RefundInvoiceCreateInput, VoidRefundInvoiceInput, CompleteRefundInvoiceInput, UpdateRefundTotalInput
 from app.graphql.resolvers.refund import export_invoices_to_csv_resolver, create_refund_invoice_resolver, void_refund_invoice_resolver, complete_refund_invoice_resolver
 from app.graphql.types.output.base import BaseInsertOneResponse, BaseUpdateOneResponse
 
@@ -37,3 +37,7 @@ class Mutation:
     @strawberry.mutation
     def mark_as_store_credit_refund_invoice(self, input: MarkAsStoreCreditRefundInvoiceInput) -> BaseUpdateOneResponse:
         return mark_as_store_credit_refund_invoice_resolver(input)
+
+    @strawberry.mutation
+    def update_refund_total(self, input: UpdateRefundTotalInput) -> BaseUpdateOneResponse:
+        return update_refund_total_resolver(input)

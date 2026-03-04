@@ -61,3 +61,7 @@ class CompleteRefundInvoiceInput:
 @strawberry.input
 class MarkAsStoreCreditRefundInvoiceInput:
     refund_id: str
+@strawberry.input
+class UpdateRefundTotalInput:
+    refund_id: str
+    total_refund_amount: float
