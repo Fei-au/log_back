@@ -22,3 +22,4 @@ class RefundInvoiceBase:
     staff_name: str
     refund_invoice_path: Optional[str] = None
     problem_item_path: Optional[str] = None
+    payment_method: Optional[str] = None

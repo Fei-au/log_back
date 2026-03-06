@@ -45,6 +45,7 @@ async def refund_invoices(input: QueryInput) -> RefundInvoiceEnhancedOutput:
     async for doc in cursor:
         doc["is_store_credit"] = doc.get("is_store_credit", None)
         doc["refund_email"] = doc.get("refund_email", None)
+        doc["payment_method"] = doc.get("payment_method", None)
         refund_invoices_list.append(map_dict_to_refund_invoice(doc))
     return RefundInvoiceEnhancedOutput(data=refund_invoices_list, total=total)
 
@@ -132,6 +133,7 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
         is_additional=is_additional,
         is_store_credit=input.is_store_credit,
         refund_email=input.refund_email,
+        payment_method=input.payment_method,
         invoice_payment_status=input.invoice_payment_status
     )
     
@@ -173,6 +175,32 @@ async def create_refund_invoice_resolver(input: RefundInvoiceCreateInput) -> Ref
         inserted_id=str(res.inserted_id)
     )
     
+    '''
+**Google Cloud Observability**
+monitoring logging, error reporting, and fault tracing
+    there are free usage allotments
+    
+**Cloud Monitoring**
+Charts
+Dashboards
+Alerts
+    Such as the server down at night
+    We recommend alerting on symptoms, and not necessarily causes
+    - The type of uptime check can be set to HTTP, HTTPS, or TCP.
+    - The resource to be checked can be an App Engine application, a Compute Engine instance, a URL of a host, or an AWS instance or load balancer.
+    
+Metrics
+A metrics scope is the root entity that holds monitoring and configuration information in Cloud Monitoring.
+- Every metrics scope is hosted by a specific Google Cloud project, known as the Scoping Project.
+- The metrics scope can include the scoping project itself plus up to 375 additional Google Cloud projects. These are called Monitored Projects.
+    - By adding projects to a metrics scope, you can view metrics from different environments (like Production, Staging, and Dev) on a single chart without switching project contexts
+
+a role assigned to one person on one project applies equally to all projects monitored by that metrics scope.
+
+In order to give people different roles per project and to control visibility to data, consider placing the monitoring of those projects in separate metrics scopes.
+
+
+    '''
 async def void_refund_invoice_resolver(input: VoidRefundInvoiceInput) -> BaseUpdateOneResponse:
     
     refunds_collection = db_refunds["refunds"]

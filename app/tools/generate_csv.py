@@ -42,8 +42,17 @@ def generate_export_csv(d: RefundInvoiceEnhancedOutput) -> bytes:
             row.staff_name,
             "",
             row.total_refund_amount,
-            (row.invoice_payment_status if row.invoice_payment_status else "") \
-                + (", Store credit" if row.is_store_credit else ((', '+row.refund_email) if row.refund_email else ""))
+            ", ".join(
+                filter(
+                    None,
+                    [
+                        row.payment_method,
+                        row.invoice_payment_status,
+                        "Store credit" if row.is_store_credit else None,
+                        row.refund_email if (not row.is_store_credit and row.refund_email) else None,
+                    ],
+                )
+            )
         ])
         for index, item in enumerate(row.order_items):
             writer.writerow([

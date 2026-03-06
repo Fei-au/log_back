@@ -47,4 +47,5 @@ class RefundInvoiceModel:
     is_additional: bool = False
     is_store_credit: bool = False
     refund_email: Optional[str] = None
+    payment_method: Optional[str] = None
     invoice_payment_status: Optional[str] = None
