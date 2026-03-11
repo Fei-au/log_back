@@ -201,7 +201,7 @@ async def mark_as_store_credit_refund_invoice_resolver(input: MarkAsStoreCreditR
     existing_refund = await refunds_collection.find_one({"refund_id": input.refund_id, "is_store_credit": True})
     if existing_refund:
         raise ValueError("This refund invoice has already been marked as store credit.")
-    res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"is_store_credit": True}})
+    res = await refunds_collection.update_one({"refund_id": input.refund_id}, {"$set": {"is_store_credit": True, "created_at": datetime.now(pytz.utc).isoformat()}})
     return BaseUpdateOneResponse(modified_count=res.modified_count)
 
 
