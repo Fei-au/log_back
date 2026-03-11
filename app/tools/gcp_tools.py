@@ -98,7 +98,6 @@ Category: OTHER
 Product description to categorize: {description}
 Category:
 """
-    print(content)
     response = genai_client.models.generate_content(
         model='gemini-2.5-pro',
         contents=content,

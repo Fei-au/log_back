@@ -16,12 +16,12 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.11.8
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: 3.11.8
 
       - name: Install dependencies
         run: |
@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Deploy code via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -60,7 +60,6 @@ jobs:
             VENV_PIP="/var/www/log_back/.venv/bin/pip"
             APP_SERVICE="log-back-api.service"
             GRPC_SERVICE="log-back-grpc.service"
-            GOOGLE_CREDENTIALS_PATH="/var/www/log_back/glass-gasket-415918-343073a9db42.json"
 
             cd "$APP_DIR"
 
@@ -69,9 +68,6 @@ jobs:
 
             echo "Installing requirements"
             "$VENV_PIP" install -r requirements.txt
-
-            # Ensure deploy commands have the required credential path available.
-            export GOOGLE_APPLICATION_CREDENTIALS="$GOOGLE_CREDENTIALS_PATH"
 
             restart_service() {
               SERVICE_NAME="$1"
